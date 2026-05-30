@@ -62,45 +62,25 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 </style>
 </head>
 <body>
-<div class="cursor"></div>
-<div class="cursor-ring"></div>
-<div class="bg-grid"></div>
-<div class="grain"></div>
-<div class="ambient ambient-1"></div>
-<div class="ambient ambient-2"></div>
+<div class="cursor"></div><div class="cursor-ring"></div>
+<div class="bg-grid"></div><div class="grain"></div>
+<div class="ambient ambient-1"></div><div class="ambient ambient-2"></div>
 <canvas id="sim"></canvas>
-
-<header class="header" id="header">
-  <div class="wordmark">AlvarezConsult</div>
-  <a href="#contact" class="header-cta">Contact</a>
-</header>
-
+<header class="header" id="header"><div class="wordmark">AlvarezConsult</div><a href="#contact" class="header-cta">Contact</a></header>
 <main>
-  <section><div class="hero-content"><div class="hero-sub">Custom AI Solutions</div>
-    <div class="hero-line" data-3d><span>We build</span></div>
-    <div class="hero-line" data-3d><span>intelligence</span></div>
-    <div class="hero-line" data-3d><span>into systems.</span></div>
-    <div class="hero-divider"></div>
-    <p class="hero-whisper">Tailored AI that knows your business.</p>
-  </div></section>
-  <section id="statement"><div class="statement">
-    <h2 data-3d>Most consultancies sell <em>AI</em>.<br>We deliver <em>outcomes</em>.</h2>
-    <p>Your data, your rules, your pace.</p>
-  </div></section>
-  <section id="capabilities"><div class="capabilities">
-    <div class="cap-item"><div class="cap-index">01</div><h3 data-3d>Strategy</h3><p>AI that compounds value.</p></div>
-    <div class="cap-item"><div class="cap-index">02</div><h3 data-3d>Build</h3><p>Prototype to production in weeks.</p></div>
-    <div class="cap-item"><div class="cap-index">03</div><h3 data-3d>Embed</h3><p>Deep integration. Zero lock-in.</p></div>
-  </div></section>
+  <section><div class="hero-content"><div class="hero-sub">Custom AI Solutions</div><div class="hero-line" data-3d><span>We build</span></div><div class="hero-line" data-3d><span>intelligence</span></div><div class="hero-line" data-3d><span>into systems.</span></div><div class="hero-divider"></div><p class="hero-whisper">Tailored AI that knows your business.</p></div></section>
+  <section id="statement"><div class="statement"><h2 data-3d>Most consultancies sell <em>AI</em>.<br>We deliver <em>outcomes</em>.</h2><p>Your data, your rules, your pace.</p></div></section>
+  <section id="capabilities"><div class="capabilities"><div class="cap-item"><div class="cap-index">01</div><h3 data-3d>Strategy</h3><p>AI that compounds value.</p></div><div class="cap-item"><div class="cap-index">02</div><h3 data-3d>Build</h3><p>Prototype to production in weeks.</p></div><div class="cap-item"><div class="cap-index">03</div><h3 data-3d>Embed</h3><p>Deep integration. Zero lock-in.</p></div></div></section>
   <section id="contact"><div class="contact-section"><h2>Let's talk.</h2><p>A handful of clients at a time.</p><a href="mailto:hello@alvarezconsult.com?subject=Let's%20talk" class="contact-link-main">hello@alvarezconsult.com</a></div></section>
 </main>
 <footer class="footer"><span>© 2026 Alvarez-Consult</span><span>Sevilla · Madrid</span></footer>
 
 <script type="importmap">
-{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
 </script>
 <script type="module">
 import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 const canvas=document.getElementById('sim');
 const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
@@ -110,18 +90,17 @@ let W=window.innerWidth,H=window.innerHeight;renderer.setSize(W,H);
 const scene=new THREE.Scene();
 const camera=new THREE.OrthographicCamera(-W/2,W/2,H/2,-H/2,1,2000);camera.position.z=500;
 
-scene.add(new THREE.AmbientLight(0x445566,1.8));
-const dl=new THREE.DirectionalLight(0xccbbff,2.5);dl.position.set(0.7,0.4,1);scene.add(dl);
-scene.add(new THREE.DirectionalLight(0x88ccff,1.3)).position.set(-0.5,0.1,0.4);
+scene.add(new THREE.AmbientLight(0x445566,2));
+const dl=new THREE.DirectionalLight(0xccbbff,3);dl.position.set(0.7,0.4,1);scene.add(dl);
+scene.add(new THREE.DirectionalLight(0x88ccff,1.5)).position.set(-0.5,0.1,0.4);
 
-// Text blocks
 const textBlocks=[];
 function scanTextBlocks(){
   while(textBlocks.length){const b=textBlocks.pop();scene.remove(b.mesh);b.mesh.geometry.dispose();b.mesh.material.dispose()}
   document.querySelectorAll('[data-3d]').forEach(el=>{
     const r=el.getBoundingClientRect();
     if(r.bottom<-100||r.top>H+100)return;
-    const geo=new THREE.BoxGeometry(r.width+20,r.height+12,40);
+    const geo=new THREE.BoxGeometry(r.width+24,r.height+14,45);
     const mat=new THREE.MeshStandardMaterial({color:0x1a1a35,metalness:0.1,roughness:0.9,transparent:true,opacity:0.3});
     const mesh=new THREE.Mesh(geo,mat);
     mesh.position.set(r.left+r.width/2-W/2,H/2-(r.top+r.height/2),-5);
@@ -130,138 +109,62 @@ function scanTextBlocks(){
   });
 }
 
-// Human character - Box/Sphere based, guaranteed to render
-function makeHuman(skinHex,topHex,pantsHex,hairHex){
-  const g=new THREE.Group();
-  const skin=new THREE.MeshStandardMaterial({color:skinHex,metalness:0.05,roughness:0.7});
-  const topM=new THREE.MeshStandardMaterial({color:topHex,metalness:0.05,roughness:0.6});
-  const pantsM=new THREE.MeshStandardMaterial({color:pantsHex,metalness:0.05,roughness:0.65});
-  const hairM=new THREE.MeshStandardMaterial({color:hairHex,metalness:0.1,roughness:0.8});
-  const shoeM=new THREE.MeshStandardMaterial({color:0x1a1a1a,metalness:0.1,roughness:0.9});
-  const eyeM=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:0.7});
-
-  // Feet
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(2.5,0.8,4),shoeM)).position.set(-1.5,-15,0.2);
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(2.5,0.8,4),shoeM)).position.set(1.5,-15,0.2);
-  // Lower legs
-  const ll=new THREE.Mesh(new THREE.CylinderGeometry(1,1.2,5,8),pantsM);ll.position.set(-1.5,-11,0);ll.name='ll';g.add(ll);
-  const rl=new THREE.Mesh(new THREE.CylinderGeometry(1,1.2,5,8),pantsM);rl.position.set(1.5,-11,0);rl.name='rl';g.add(rl);
-  // Upper legs
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.4,5,8),pantsM)).position.set(-1.5,-5.5,0);
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.4,5,8),pantsM)).position.set(1.5,-5.5,0);
-  // Pelvis
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(5.5,2.5,4),pantsM)).position.y=-8.5;
-  // Torso
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(2.2,2.8,8,10),topM)).position.y=-1;
-  // Chest
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(2.8,14,10,0,Math.PI*2,0,Math.PI*0.45),topM)).position.y=2;
-  // Shoulders
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(1.5,8,8),topM)).position.set(-3.5,3,0);
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(1.5,8,8),topM)).position.set(3.5,3,0);
-  // Upper arms
-  const la=new THREE.Mesh(new THREE.CylinderGeometry(0.8,1,4,8),topM);la.position.set(-3.5,0,0);la.name='la';g.add(la);
-  const ra=new THREE.Mesh(new THREE.CylinderGeometry(0.8,1,4,8),topM);ra.position.set(3.5,0,0);ra.name='ra';g.add(ra);
-  // Forearms
-  const lfa=new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.9,3.5,8),skin);lfa.position.set(-3.5,-3.5,0);lfa.name='lfa';g.add(lfa);
-  const rfa=new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.9,3.5,8),skin);rfa.position.set(3.5,-3.5,0);rfa.name='rfa';g.add(rfa);
-  // Hands
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(0.9,8,8),skin)).position.set(-3.5,-5.3,0);
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(0.9,8,8),skin)).position.set(3.5,-5.3,0);
-  // Neck
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.9,1.2,2.5,8),skin)).position.y=3.5;
-  // Head
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(3.1,16,12),skin)).position.y=6;
-  // Jaw
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(4.3,1.3,3),skin)).position.set(0,5,0.4);
-  // Hair
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(3.3,16,8,0,Math.PI*2,0,Math.PI*0.5),hairM)).position.y=6.3;
-  // Eyes
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(0.5,6,6),eyeM)).position.set(-1,6.3,2.5);
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(0.5,6,6),eyeM)).position.set(1,6.3,2.5);
-  // Nose
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.35,1,6),new THREE.MeshStandardMaterial({color:skinHex,roughness:0.8}))).position.set(0,5.8,2.8);
-
-  // Set up pivot groups for animation
-  const leftLeg=new THREE.Group();leftLeg.position.set(-1.5,-8,0);g.add(leftLeg);leftLeg.add(ll);
-  const rightLeg=new THREE.Group();rightLeg.position.set(1.5,-8,0);g.add(rightLeg);rightLeg.add(rl);
-
-  const leftArm=new THREE.Group();leftArm.position.set(-3.5,3,0);g.add(leftArm);leftArm.add(la);
-  const rightArm=new THREE.Group();rightArm.position.set(3.5,3,0);g.add(rightArm);rightArm.add(ra);
-  const leftFA=new THREE.Group();leftFA.position.set(0,-2.2,0);leftArm.add(leftFA);leftFA.add(lfa);
-  const rightFA=new THREE.Group();rightFA.position.set(0,-2.2,0);rightArm.add(rightFA);rightFA.add(rfa);
-
-  g.userData={leftLeg,rightLeg,leftArm,rightArm,leftFA,rightFA,phase:Math.random()*Math.PI*2};
-  return g;
-}
-
-const OUTFITS=[
-  [0xd4a574,0x3a3a50,0x1e1e33,0x1a0a00],
-  [0xc4956a,0xf0f0f0,0x2e2e44,0x0a0a1a],
-  [0xe8c8a0,0x4a3055,0x282840,0x2a1a0a],
-  [0xdeb887,0x204040,0x384860,0x3a2a1a],
-  [0xf0d0b0,0x553040,0x343450,0x1a0a2a],
-  [0xc8a882,0x305040,0x404058,0x0a0a0a]
-];
-
-const characters=[];
+let baseModel=null,animations=null;
+const characters=[],mixers=[];
 const GRAVITY=1000;
+const loader=new GLTFLoader();
 
-function spawnCharacter(){
-  const [skin,top,pants,hair]=OUTFITS[Math.floor(Math.random()*OUTFITS.length)];
-  const human=makeHuman(skin,top,pants,hair);
-  const s=H*0.09;
-  human.scale.setScalar(s/16);
-  human.position.set((Math.random()-0.5)*W*0.55,H/2+260,0);
-  human.userData={vx:(Math.random()-0.5)*70,vy:0,grounded:false,age:0,life:18+Math.random()*10};
-  scene.add(human);
-  characters.push(human);
+loader.load('models/human.glb',gltf=>{
+  baseModel=gltf.scene;animations=gltf.animations;
+  console.log('Model loaded:',animations.length,'anims');
+  spawnChar();spawnChar();spawnChar();
+});
+
+function spawnChar(){
+  if(!baseModel)return;
+  const clone=baseModel.clone(true);
+  const box=new THREE.Box3().setFromObject(clone);
+  const h=box.max.y-box.min.y;
+  clone.scale.setScalar(H*0.1/h);
+  clone.position.set((Math.random()-0.5)*W*0.5,H/2+300,0);
+  clone.rotation.set(0,Math.random()<0.5?0:Math.PI,0);
+
+  const mixer=new THREE.AnimationMixer(clone);
+  if(animations&&animations.length){
+    const idx=animations.length>4?3:0;
+    mixer.clipAction(animations[idx]).play();
+  }
+  mixers.push(mixer);
+  clone.userData={vx:(Math.random()-0.5)*60,vy:0,age:0,life:20+Math.random()*12};
+  scene.add(clone);
+  characters.push(clone);
 }
 
 function findGround(x,y){
   let top=-H;
   for(const b of textBlocks){
-    if(x>b.cx-b.w/2-25&&x<b.cx+b.w/2+25&&y>b.cy-b.h/2-25){
+    if(x>b.cx-b.w/2-30&&x<b.cx+b.w/2+30&&y>b.cy-b.h/2-30){
       if(b.cy+b.h/2>top)top=b.cy+b.h/2;
     }
   }
   return Math.max(top,-H/2);
 }
 
-function updateCharacters(dt){
+function updateChars(dt){
+  for(const m of mixers)m.update(dt);
   for(let i=characters.length-1;i>=0;i--){
-    const c=characters[i],ud=c.userData;
-    ud.age+=dt;ud.phase+=dt*5.5;
-
-    ud.vy-=GRAVITY*dt;
-    c.position.x+=ud.vx*dt;
-    c.position.y+=ud.vy*dt;
-
-    const ground=findGround(c.position.x,c.position.y);
-    const s=c.scale.x*16;
-    const footY=c.position.y;
-    if(footY<ground+s*0.85){c.position.y=ground+s*0.85;ud.vy=0;ud.grounded=true}else ud.grounded=false;
-
-    if(c.position.x<-W/2+60){c.position.x=-W/2+60;ud.vx=Math.abs(ud.vx)}
-    if(c.position.x>W/2-60){c.position.x=W/2-60;ud.vx=-Math.abs(ud.vx)}
-    if(Math.random()<dt*0.1)ud.vx=(Math.random()-0.5)*80;
-
-    // Walk animation
-    const swing=Math.sin(ud.phase)*0.3;
-    const active=ud.grounded?1:0.2;
-    ud.leftLeg.rotation.x=swing*active;
-    ud.rightLeg.rotation.x=-swing*active;
-    ud.leftArm.rotation.z=-0.4-swing*active;
-    ud.rightArm.rotation.z=0.4+swing*active;
-    ud.leftFA.rotation.z=swing*active*0.5;
-    ud.rightFA.rotation.z=-swing*active*0.5;
-
-    if(ud.grounded)c.position.y=ground+s*0.85+Math.abs(Math.sin(ud.phase*1.2))*0.8*active;
-
-    // Fade
-    const fade=ud.age<1.5?ud.age/1.5:ud.age>ud.life-2?Math.max(0,(ud.life-ud.age)/2):1;
-    c.traverse(ch=>{if(ch.material&&ch.material.opacity!==undefined&&!ch.material.emissive)ch.material.opacity=0.75*fade});
-
-    if(ud.age>ud.life){scene.remove(c);characters.splice(i,1)}
+    const c=characters[i],u=c.userData;
+    u.age+=dt;u.vy-=GRAVITY*dt;
+    c.position.x+=u.vx*dt;c.position.y+=u.vy*dt;
+    const g=findGround(c.position.x,c.position.y);
+    const s=c.scale.x*5.5;
+    if(c.position.y<g+s*0.7){c.position.y=g+s*0.7;u.vy=0}
+    if(c.position.x<-W/2+80){c.position.x=-W/2+80;u.vx=Math.abs(u.vx)}
+    if(c.position.x>W/2-80){c.position.x=W/2-80;u.vx=-Math.abs(u.vx)}
+    if(Math.random()<dt*0.08)u.vx=(Math.random()-0.5)*60;
+    const fade=u.age<2?u.age/2:u.age>u.life-2?Math.max(0,(u.life-u.age)/2):1;
+    c.traverse(ch=>{if(ch.material&&ch.material.opacity!==undefined&&!ch.material.emissive)ch.material.opacity=0.8*fade});
+    if(u.age>u.life){scene.remove(c);characters.splice(i,1)}
   }
 }
 
@@ -269,21 +172,20 @@ function animate(ts){
   requestAnimationFrame(animate);
   const dt=Math.min((ts-(animate._t||ts))/1000,0.1);animate._t=ts;
   scanTextBlocks();
-  if(characters.length<5&&(!animate._ns||ts>animate._ns)){spawnCharacter();animate._ns=ts+1500+Math.random()*2500}
-  updateCharacters(dt);
+  if(characters.length<5&&(!animate._ns||ts>animate._ns)&&baseModel){spawnChar();animate._ns=ts+2000+Math.random()*3000}
+  updateChars(dt);
   renderer.render(scene,camera);
 }
 animate._t=0;
 
 window.addEventListener('resize',()=>{W=window.innerWidth;H=window.innerHeight;renderer.setSize(W,H);camera.left=-W/2;camera.right=W/2;camera.top=H/2;camera.bottom=-H/2;camera.updateProjectionMatrix()});
-window.addEventListener('scroll',()=>scrollY=window.scrollY,{passive:true});
-
-scanTextBlocks();spawnCharacter();spawnCharacter();requestAnimationFrame(animate);
+let scrollY=0;window.addEventListener('scroll',()=>scrollY=window.scrollY,{passive:true});
+scanTextBlocks();requestAnimationFrame(animate);
 
 const cursor=document.querySelector('.cursor'),ring=document.querySelector('.cursor-ring');
 let mx=0,my=0,rX=0,rY=0;
 document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
-(function animCur(){rX+=(mx-rX)*0.15;rY+=(my-rY)*0.15;cursor.style.left=rX+'px';cursor.style.top=rY+'px';ring.style.left=mx+'px';ring.style.top=my+'px';requestAnimationFrame(animCur)})();
+(function a(){rX+=(mx-rX)*0.15;rY+=(my-rY)*0.15;cursor.style.left=rX+'px';cursor.style.top=rY+'px';ring.style.left=mx+'px';ring.style.top=my+'px';requestAnimationFrame(a)})();
 document.querySelectorAll('a,button,.cap-item').forEach(el=>{el.addEventListener('mouseenter',()=>ring.classList.add('hover'));el.addEventListener('mouseleave',()=>ring.classList.remove('hover'))});
 const hdr=document.getElementById('header');window.addEventListener('scroll',()=>hdr.classList.toggle('scrolled',scrollY>30),{passive:true});
 </script>
