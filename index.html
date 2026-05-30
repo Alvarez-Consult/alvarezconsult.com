@@ -283,7 +283,6 @@ function animate(ts){
   updateRobots(dt);
 
   // Follow scroll: camera offset
-  camera.position.y=-scrollY;
   camera.updateProjectionMatrix();
 
   renderer.render(scene,camera);
