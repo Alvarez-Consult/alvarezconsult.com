@@ -70,27 +70,40 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
-const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('sim'),alpha:false});
-renderer.setClearColor(0x111122);
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('sim'),alpha:true,antialias:true});
 renderer.setSize(window.innerWidth,window.innerHeight);
 
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,100);
-camera.position.set(0,2,7);
-camera.lookAt(0,1,0);
+camera.position.set(0,0,10);
+camera.lookAt(0,0,0);
 
-scene.add(new THREE.AmbientLight(0xffffff,3));
-scene.add(new THREE.DirectionalLight(0xffffff,5)).position.set(2,5,3);
+scene.add(new THREE.AmbientLight(0xffffff,2));
+scene.add(new THREE.DirectionalLight(0xffffff,2)).position.set(1,1,1);
 
-// Load one model
+// Reference cube
+const cube=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),new THREE.MeshStandardMaterial({color:0xff00ff}));
+cube.position.set(-4,0,0);
+scene.add(cube);
+
+// Load model
 new GLTFLoader().load('models/human.glb',function(gltf){
   const model=gltf.scene;
-
+  // Force all materials to bright color
+  model.traverse(function(c){
+    if(c.isMesh){
+      const mats=Array.isArray(c.material)?c.material:[c.material];
+      for(let i=0;i<mats.length;i++){
+        mats[i].color=new THREE.Color(0xff8800);
+        mats[i].emissive=new THREE.Color(0x441100);
+        mats[i].needsUpdate=true;
+      }
+    }
+  });
   const box=new THREE.Box3().setFromObject(model);
   const h=box.max.y-box.min.y;
-  model.scale.setScalar(3/h);
-  model.position.set(0,1.5,0);
-
+  model.scale.setScalar(5/h);
+  model.position.set(0,-2,0);
   scene.add(model);
 
   if(gltf.animations.length){
@@ -100,12 +113,14 @@ new GLTFLoader().load('models/human.glb',function(gltf){
     function anim(){
       requestAnimationFrame(anim);
       mixer.update(Math.min(clock.getDelta(),0.1));
-      model.rotation.y+=0.005;
+      cube.rotation.y+=0.01;
+      cube.rotation.x+=0.005;
+      model.rotation.y+=0.003;
       renderer.render(scene,camera);
     }
     anim();
   }
-  console.log('Loaded');
+  console.log('OK');
 });
 </script>
 </body>
