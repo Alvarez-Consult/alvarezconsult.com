@@ -137,7 +137,7 @@ function scanTextBlocks(){
     const rect=el.getBoundingClientRect();
     if(rect.bottom<0||rect.top>H+100)return;
     const cx=rect.left+rect.width/2-W/2;
-    const cy=H/2-(rect.top+rect.height/2)-scrollY;
+    const cy=H/2-(rect.top+rect.height/2);
     const w=rect.width, h=rect.height;
     const geo=new THREE.BoxGeometry(w+20, h+10, 30);
     const mat=new THREE.MeshStandardMaterial({color:0x1a1a35,metalness:0.1,roughness:0.9,transparent:true,opacity:0.4});
