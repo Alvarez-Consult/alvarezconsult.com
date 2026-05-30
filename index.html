@@ -12,9 +12,6 @@ body{font-family:'Inter',system-ui,sans-serif;background:#05050d;color:#e4e4ec;f
 #sim{position:fixed;inset:0;z-index:1}
 .bg-grid{position:fixed;inset:0;z-index:0;opacity:0.025;background-image:linear-gradient(rgba(139,92,246,0.2) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,0.2) 1px,transparent 1px);background-size:80px 80px}
 .grain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");background-size:256px 256px}
-.ambient{position:fixed;z-index:0;pointer-events:none}
-.ambient-1{top:-20%;left:-10%;width:60vw;height:60vw;background:radial-gradient(circle,rgba(168,85,247,0.06),transparent 60%)}
-.ambient-2{bottom:-30%;right:-15%;width:50vw;height:50vw;background:radial-gradient(circle,rgba(6,182,212,0.04),transparent 60%)}
 main{position:relative;z-index:3}
 section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:4rem 2rem}
 .header{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.5rem 2.5rem;display:flex;justify-content:space-between;align-items:center;transition:background 0.5s}
@@ -57,14 +54,13 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 </head>
 <body>
 <div class="bg-grid"></div><div class="grain"></div>
-<div class="ambient ambient-1"></div><div class="ambient ambient-2"></div>
 <canvas id="sim"></canvas>
 
 <header class="header" id="header"><div class="wordmark">AlvarezConsult</div><a href="#contact" class="header-cta">Contact</a></header>
 <main>
-  <section><div class="hero-content"><div class="hero-sub">Custom AI Solutions</div><div class="hero-line" data-3d><span>We build</span></div><div class="hero-line" data-3d><span>intelligence</span></div><div class="hero-line" data-3d><span>into systems.</span></div><div class="hero-divider"></div><p class="hero-whisper">Tailored AI that knows your business.</p></div></section>
-  <section id="statement"><div class="statement"><h2 data-3d>Most consultancies sell <em>AI</em>.<br>We deliver <em>outcomes</em>.</h2><p>Your data, your rules, your pace.</p></div></section>
-  <section id="capabilities"><div class="capabilities"><div class="cap-item"><div class="cap-index">01</div><h3 data-3d>Strategy</h3><p>AI that compounds value.</p></div><div class="cap-item"><div class="cap-index">02</div><h3 data-3d>Build</h3><p>Prototype to production in weeks.</p></div><div class="cap-item"><div class="cap-index">03</div><h3 data-3d>Embed</h3><p>Deep integration. Zero lock-in.</p></div></div></section>
+  <section><div class="hero-content"><div class="hero-sub">Custom AI Solutions</div><div class="hero-line"><span>We build</span></div><div class="hero-line"><span>intelligence</span></div><div class="hero-line"><span>into systems.</span></div><div class="hero-divider"></div><p class="hero-whisper">Tailored AI that knows your business.</p></div></section>
+  <section id="statement"><div class="statement"><h2>Most consultancies sell <em>AI</em>.<br>We deliver <em>outcomes</em>.</h2><p>Your data, your rules, your pace.</p></div></section>
+  <section id="capabilities"><div class="capabilities"><div class="cap-item"><div class="cap-index">01</div><h3>Strategy</h3><p>AI that compounds value.</p></div><div class="cap-item"><div class="cap-index">02</div><h3>Build</h3><p>Prototype to production in weeks.</p></div><div class="cap-item"><div class="cap-index">03</div><h3>Embed</h3><p>Deep integration. Zero lock-in.</p></div></div></section>
   <section id="contact"><div class="contact-section"><h2>Let's talk.</h2><p>A handful of clients at a time.</p><a href="mailto:hello@alvarezconsult.com?subject=Let's%20talk" class="contact-link-main">hello@alvarezconsult.com</a></div></section>
 </main>
 <footer class="footer"><span>© 2026 Alvarez-Consult</span><span>Sevilla · Madrid</span></footer>
@@ -76,165 +72,123 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
-const canvas=document.getElementById('sim');
-const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('sim'),alpha:true,antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-let W=window.innerWidth,H=window.innerHeight;renderer.setSize(W,H);
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.shadowMap.enabled=true;
 
 const scene=new THREE.Scene();
-const camera=new THREE.OrthographicCamera(-W/2,W/2,H/2,-H/2,1,2000);camera.position.z=500;
+const camera=new THREE.PerspectiveCamera(50,window.innerWidth/window.innerHeight,0.5,500);
+camera.position.set(0,2,16);
+camera.lookAt(0,0,0);
 
-scene.add(new THREE.AmbientLight(0xaabbcc,3));
-scene.add(new THREE.DirectionalLight(0xffffff,3)).position.set(0.5,0.4,1);
-scene.add(new THREE.DirectionalLight(0x8888ff,2)).position.set(-0.5,0,0.5);
+// Bright environment
+scene.add(new THREE.AmbientLight(0xffffff,2));
+const sun=new THREE.DirectionalLight(0xffffff,4);
+sun.position.set(3,8,5);
+sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);
+scene.add(sun);
+scene.add(new THREE.DirectionalLight(0x8888ff,1.5)).position.set(-2,2,-3);
 
-// Create gradient map via canvas (no HTTP request)
-const gradCanvas=document.createElement('canvas');
-gradCanvas.width=4;gradCanvas.height=1;
-const gctx=gradCanvas.getContext('2d');
-const gradG=gctx.createLinearGradient(0,0,4,0);
-gradG.addColorStop(0,'#333333');
-gradG.addColorStop(0.33,'#777777');
-gradG.addColorStop(0.66,'#bbbbbb');
-gradG.addColorStop(1,'#ffffff');
-gctx.fillStyle=gradG;gctx.fillRect(0,0,4,1);
-const gradientMap=new THREE.CanvasTexture(gradCanvas);
-gradientMap.minFilter=THREE.NearestFilter;
-gradientMap.magFilter=THREE.NearestFilter;
+// Ground
+const ground=new THREE.Mesh(
+  new THREE.PlaneGeometry(40,40),
+  new THREE.MeshStandardMaterial({color:0x111122,roughness:0.9,metalness:0.1})
+);
+ground.rotation.x=-Math.PI/2;ground.position.y=-5;
+ground.receiveShadow=true;
+scene.add(ground);
 
-function makeToonMat(hex){
-  return new THREE.MeshToonMaterial({color:hex,gradientMap:gradientMap,transparent:true,opacity:0.9});
-}
+// Grid on ground
+const gridHelper=new THREE.PolarGridHelper(18,32,24,64,0x222244,0x222244);
+gridHelper.position.y=-4.99;scene.add(gridHelper);
 
-// Text blocks
-const textBlocks=[];
-function scanTextBlocks(){
-  while(textBlocks.length){const b=textBlocks.pop();scene.remove(b.mesh);b.mesh.geometry.dispose();b.mesh.material.dispose()}
-  document.querySelectorAll('[data-3d]').forEach(function(el){
-    const r=el.getBoundingClientRect();
-    if(r.bottom<-100||r.top>H+100)return;
-    const mesh=new THREE.Mesh(
-      new THREE.BoxGeometry(r.width+24,r.height+14,45),
-      makeToonMat(0x2a2a4a)
-    );
-    mesh.material.opacity=0.25;
-    mesh.position.set(r.left+r.width/2-W/2,H/2-(r.top+r.height/2),-5);
-    scene.add(mesh);
-    textBlocks.push({mesh,cx:r.left+r.width/2-W/2,cy:H/2-(r.top+r.height/2),w:r.width,h:r.height});
-  });
-}
-
-// Toonify helper
-function toonify(obj,hex){
-  obj.traverse(function(child){
-    if(!child.isMesh)return;
-    const materials=Array.isArray(child.material)?child.material:[child.material];
-    const result=[];
-    for(let i=0;i<materials.length;i++){
-      const m=materials[i];
-      const color=m.color?m.color.getHex():hex||0xcccccc;
-      const tm=makeToonMat(color);
-      result.push(tm);
-    }
-    child.material=Array.isArray(child.material)?result:result[0];
-  });
-}
-
-const loader=new GLTFLoader();
-let humanM=null,humanA=null,foxM=null,foxA=null;
 const chars=[],mixers=[];
-const GRAVITY=600;
-let scrollY=0;
-
-const COLORS=[0xff8888,0x88bbff,0x88dd88,0xffff88,0xff88ff,0x88ddff,0xffaa66,0xcc88ff];
+const loader=new GLTFLoader();
+const COLORS=[0xff6688,0x66aaff,0x66dd66,0xffee44,0xff66ff,0x66ddff,0xff8844,0xbb66ff];
+let humanM=null,humanA=null;
 
 loader.load('models/human.glb',function(gltf){
   humanM=gltf.scene;humanA=gltf.animations;
-  for(let i=0;i<3;i++)spawn('human');
+  for(let i=0;i<5;i++)spawn();
 });
 
-const FOX_URL='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/Fox/glTF-Binary/Fox.glb';
-loader.load(FOX_URL,function(gltf){
-  foxM=gltf.scene;foxA=gltf.animations;
-  for(let i=0;i<2;i++)spawn('fox');
-});
-
-function spawn(type){
-  const fox=(type==='fox');
-  if(fox&&!foxM)return;if(!fox&&!humanM)return;
-  const src=fox?foxM:humanM;
-  const anims=fox?foxA:humanA;
-  const clone=src.clone(true);
-
+function spawn(){
+  if(!humanM)return;
+  const clone=humanM.clone(true);
   const box=new THREE.Box3().setFromObject(clone);
   const h=box.max.y-box.min.y;
-  clone.scale.setScalar(H*0.2/h);
+  clone.scale.setScalar(3.5/h);
 
+  // Random color
   const col=COLORS[Math.floor(Math.random()*COLORS.length)];
-  toonify(clone,col);
+  clone.traverse(function(c){
+    if(c.isMesh&&c.material){
+      const mats=Array.isArray(c.material)?c.material:[c.material];
+      for(let i=0;i<mats.length;i++){
+        const m=mats[i];
+        if(m.color)m.color.setHex(col);
+        m.transparent=true;m.opacity=0.85;
+        m.castShadow=true;m.receiveShadow=true;
+      }
+    }
+  });
 
-  clone.position.set((Math.random()-0.5)*W*0.55,(Math.random()-0.5)*H*0.55,0);
+  clone.position.set((Math.random()-0.5)*12,0,(Math.random()-0.5)*10);
   clone.rotation.set(0,Math.random()*Math.PI*2,0);
 
   const mixer=new THREE.AnimationMixer(clone);
-  if(anims&&anims.length)mixer.clipAction(anims[Math.min(1,anims.length-1)]).play();
+  if(humanA&&humanA.length)mixer.clipAction(humanA[Math.min(1,humanA.length-1)]).play();
   mixers.push(mixer);
-  clone.userData={vx:(Math.random()-0.5)*40,vy:0,age:0,life:25+Math.random()*15};
+  clone.userData={vx:(Math.random()-0.5)*3,vz:(Math.random()-0.5)*3,age:0,life:20+Math.random()*15};
   scene.add(clone);
   chars.push(clone);
 }
 
-function findGround(x,y){
-  let top=-H/2;
-  for(const b of textBlocks){
-    if(x>b.cx-b.w/2-40&&x<b.cx+b.w/2+40&&y>b.cy-b.h/2-40){
-      if(b.cy+b.h/2>top)top=b.cy+b.h/2;
-    }
-  }
-  return Math.max(top,-H/2);
-}
+const clock=new THREE.Clock();
 
-function updateChars(dt){
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),0.1);
+
   for(let i=0;i<mixers.length;i++)mixers[i].update(dt);
+
   for(let i=chars.length-1;i>=0;i--){
     const c=chars[i],u=c.userData;
-    u.age+=dt;u.vy-=GRAVITY*dt;
-    c.position.x+=u.vx*dt;c.position.y+=u.vy*dt;
-    const g=findGround(c.position.x,c.position.y);
-    const fs=c.scale.x*1.8;
-    if(c.position.y<g+fs){c.position.y=g+fs;u.vy=0}
-    if(c.position.x<-W/2+50){c.position.x=-W/2+50;u.vx=Math.abs(u.vx)}
-    if(c.position.x>W/2-50){c.position.x=W/2-50;u.vx=-Math.abs(u.vx)}
-    if(Math.random()<dt*0.12)u.vx=(Math.random()-0.5)*50;
-    const fade=u.age<1.5?u.age/1.5:u.age>u.life-2?Math.max(0,(u.life-u.age)/2):1;
-    c.traverse(function(ch){if(ch.material&&ch.material.opacity!==undefined)ch.material.opacity=0.9*fade});
+    u.age+=dt;
+    c.position.x+=u.vx*dt;
+    c.position.z+=u.vz*dt;
+    c.rotation.y+=dt*0.2;
+
+    // Bounce at boundaries
+    if(Math.abs(c.position.x)>15){u.vx*=-1;c.position.x=Math.sign(c.position.x)*15}
+    if(Math.abs(c.position.z)>12){u.vz*=-1;c.position.z=Math.sign(c.position.z)*12}
+    if(Math.random()<dt*0.1){u.vx=(Math.random()-0.5)*4;u.vz=(Math.random()-0.5)*4}
+
+    c.position.y=-5+Math.abs(Math.sin(u.age*3))*0.15;
+
+    const fade=u.age<1?u.age:u.age>u.life-2?Math.max(0,(u.life-u.age)/2):1;
+    c.traverse(function(ch){if(ch.material&&ch.material.opacity!==undefined)ch.material.opacity=0.85*fade});
+
     if(u.age>u.life){scene.remove(c);chars.splice(i,1)}
   }
-}
 
-let _t=0,_ns=0;
-function animate(ts){
-  requestAnimationFrame(animate);
-  const dt=Math.min((ts-_t)/1000,0.1);_t=ts;
-  scanTextBlocks();
-  if(chars.length<6&&ts>_ns&&(humanM||foxM)){
-    spawn(Math.random()<0.4&&foxM?'fox':'human');
-    _ns=ts+2000+Math.random()*3000;
-  }
-  updateChars(dt);
+  if(chars.length<7&&humanM)spawn();
+
+  // Gentle camera sway
+  camera.position.x=Math.sin(Date.now()*0.0001)*2;
+  camera.lookAt(0,-1,0);
+
   renderer.render(scene,camera);
 }
 
 window.addEventListener('resize',function(){
-  W=window.innerWidth;H=window.innerHeight;
-  renderer.setSize(W,H);
-  camera.left=-W/2;camera.right=W/2;camera.top=H/2;camera.bottom=-H/2;
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  camera.aspect=window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
 });
-window.addEventListener('scroll',function(){scrollY=window.scrollY},{passive:true});
-scanTextBlocks();requestAnimationFrame(animate);
-const hdr=document.getElementById('header');
-window.addEventListener('scroll',function(){hdr.classList.toggle('scrolled',scrollY>30)},{passive:true});
+
+requestAnimationFrame(animate);
 </script>
 </body>
 </html>
