@@ -215,7 +215,7 @@ class Agent{
       cx.beginPath();cx.arc(t.x-this.x,t.y-this.y,2+i*0.5,0,Math.PI*2);
       cx.fillStyle=`rgba(${this.rgb},${t.life*0.5})`;cx.fill();
     }
-    ctx.restore=cx.restore.bind(cx);
+    //
     cx.restore();
   }
 }
