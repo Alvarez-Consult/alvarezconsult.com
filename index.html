@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Custom AI solutions. Quietly exceptional.">
+<meta name="description" content="Custom AI solutions.">
 <title>Alvarez-Consult</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600&display=swap');
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth;scrollbar-width:none}
-html::-webkit-scrollbar{display:none}
-body{font-family:'Inter',system-ui,sans-serif;background:#05050d;color:#e4e4ec;font-weight:300;line-height:1.5;-webkit-font-smoothing:antialiased;cursor:none;overflow-x:hidden}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:#05050d;color:#e4e4ec;font-weight:300;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 ::selection{background:rgba(139,92,246,0.3);color:#fff}
 .cursor{position:fixed;width:8px;height:8px;border-radius:50%;background:#8b5cf6;pointer-events:none;z-index:9999;mix-blend-mode:exclusion;transition:transform 0.15s;transform:translate(-50%,-50%)}
 .cursor-ring{position:fixed;width:36px;height:36px;border-radius:50%;border:1px solid rgba(139,92,246,0.3);pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:transform 0.3s cubic-bezier(0.22,1,0.36,1),width 0.3s,height 0.3s,border-color 0.3s}
 .cursor-ring.hover{width:56px;height:56px;border-color:rgba(139,92,246,0.6)}
 #sim{position:fixed;inset:0;z-index:1}
+#status{position:fixed;bottom:20px;left:20px;z-index:200;color:#8b5cf6;font-size:12px;font-family:monospace;opacity:0.7}
 .bg-grid{position:fixed;inset:0;z-index:0;opacity:0.025;background-image:linear-gradient(rgba(139,92,246,0.2) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,0.2) 1px,transparent 1px);background-size:80px 80px}
 .grain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");background-size:256px 256px}
 .ambient{position:fixed;z-index:0;pointer-events:none}
@@ -26,7 +26,7 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 .header{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.5rem 2.5rem;display:flex;justify-content:space-between;align-items:center;transition:background 0.5s}
 .header.scrolled{background:rgba(5,5,13,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 .wordmark{font-size:1rem;font-weight:600;letter-spacing:0.04em;color:#8b5cf6}
-.header-cta{font-size:0.8rem;color:#a1a1aa;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.3s;cursor:none}
+.header-cta{font-size:0.8rem;color:#a1a1aa;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.3s}
 .header-cta:hover{color:#8b5cf6}
 .hero-content{max-width:780px;text-align:center}
 .hero-sub{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.25em;color:#8b5cf6;margin-bottom:2rem;font-weight:400;animation:fadeIn 1s both}
@@ -45,7 +45,7 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 .statement h2 em{font-style:normal;color:#8b5cf6;font-weight:600}
 .statement p{color:#71717a;font-size:1rem;line-height:1.8}
 .capabilities{max-width:900px;display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
-.cap-item{padding:3rem 2rem;background:rgba(139,92,246,0.02);border:1px solid rgba(139,92,246,0.06);transition:all 0.5s ease;cursor:none}
+.cap-item{padding:3rem 2rem;background:rgba(139,92,246,0.02);border:1px solid rgba(139,92,246,0.06);transition:all 0.5s ease}
 .cap-item:hover{background:rgba(139,92,246,0.06);border-color:rgba(139,92,246,0.15)}
 .cap-index{font-size:0.6rem;color:#8b5cf6;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:1.5rem}
 .cap-item h3{font-size:1.05rem;font-weight:400;margin-bottom:0.75rem}
@@ -53,12 +53,12 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 .contact-section{text-align:center;max-width:500px}
 .contact-section h2{font-size:2rem;font-weight:300;letter-spacing:-0.02em;margin-bottom:1rem}
 .contact-section p{color:#71717a;font-size:0.95rem;margin-bottom:2.5rem;line-height:1.7}
-.contact-link-main{display:inline-flex;align-items:center;gap:0.75rem;padding:0.9rem 2rem;border:1px solid rgba(139,92,246,0.2);border-radius:2px;color:#8b5cf6;text-decoration:none;font-size:0.85rem;font-weight:400;letter-spacing:0.04em;transition:all 0.4s ease;cursor:none;position:relative;overflow:hidden}
+.contact-link-main{display:inline-flex;align-items:center;gap:0.75rem;padding:0.9rem 2rem;border:1px solid rgba(139,92,246,0.2);border-radius:2px;color:#8b5cf6;text-decoration:none;font-size:0.85rem;font-weight:400;letter-spacing:0.04em;transition:all 0.4s ease;position:relative;overflow:hidden}
 .contact-link-main::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(139,92,246,0.08),transparent);transform:translateX(-100%);transition:transform 0.6s ease}
 .contact-link-main:hover::before{transform:translateX(100%)}
 .contact-link-main:hover{border-color:rgba(139,92,246,0.5);box-shadow:0 0 30px rgba(139,92,246,0.1)}
 .footer{position:fixed;bottom:0;left:0;right:0;z-index:100;padding:1.5rem 2.5rem;display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;color:#52525b;letter-spacing:0.06em}
-@media(max-width:768px){.capabilities{grid-template-columns:1fr}.header,.footer{padding:1rem 1.5rem}section{padding:6rem 1.5rem}.cursor,.cursor-ring{display:none}body{cursor:auto}.header-cta,.contact-link-main,.cap-item{cursor:pointer}}
+@media(max-width:768px){.capabilities{grid-template-columns:1fr}.header,.footer{padding:1rem 1.5rem}section{padding:6rem 1.5rem}.cursor,.cursor-ring{display:none}.header-cta,.contact-link-main,.cap-item{cursor:pointer}}
 </style>
 </head>
 <body>
@@ -66,6 +66,8 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 <div class="bg-grid"></div><div class="grain"></div>
 <div class="ambient ambient-1"></div><div class="ambient ambient-2"></div>
 <canvas id="sim"></canvas>
+<div id="status">loading...</div>
+
 <header class="header" id="header"><div class="wordmark">AlvarezConsult</div><a href="#contact" class="header-cta">Contact</a></header>
 <main>
   <section><div class="hero-content"><div class="hero-sub">Custom AI Solutions</div><div class="hero-line" data-3d><span>We build</span></div><div class="hero-line" data-3d><span>intelligence</span></div><div class="hero-line" data-3d><span>into systems.</span></div><div class="hero-divider"></div><p class="hero-whisper">Tailored AI that knows your business.</p></div></section>
@@ -82,6 +84,9 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
+const statusEl=document.getElementById('status');
+function log(m){statusEl.textContent=m;console.log(m)}
+
 const canvas=document.getElementById('sim');
 const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
@@ -94,7 +99,9 @@ scene.add(new THREE.AmbientLight(0x445566,2));
 const dl=new THREE.DirectionalLight(0xccbbff,3);dl.position.set(0.7,0.4,1);scene.add(dl);
 scene.add(new THREE.DirectionalLight(0x88ccff,1.5)).position.set(-0.5,0.1,0.4);
 
-// ── Text blocks ──
+log('Three.js loaded');
+
+// Text blocks
 const textBlocks=[];
 function scanTextBlocks(){
   while(textBlocks.length){const b=textBlocks.pop();scene.remove(b.mesh);b.mesh.geometry.dispose();b.mesh.material.dispose()}
@@ -110,22 +117,32 @@ function scanTextBlocks(){
   });
 }
 
-// ── Animated characters ──
-let baseModel=null,animations=null;
+// Animated characters
+let baseModel=null,animationsArr=null;
 const characters=[],mixers=[];
 const GRAVITY=1000;
 const loader=new GLTFLoader();
 let scrollY=0;
 
-loader.load('models/human.glb',
+log('Loading model...');
+
+loader.load(
+  'https://alvarezconsult.com/models/human.glb',
   function(gltf){
     baseModel=gltf.scene;
-    animations=gltf.animations;
-    console.log('✓ Model loaded:',animations.length,'animations');
+    animationsArr=gltf.animations;
+    log('Model OK: '+animationsArr.length+' anims');
+    // Hide status
+    setTimeout(function(){statusEl.style.display='none'},2000);
     spawnChar();spawnChar();spawnChar();
   },
-  function(xhr){if(xhr.total)console.log(Math.round(xhr.loaded/xhr.total*100)+'%')},
-  function(err){console.error('Model load error:',err)}
+  function(xhr){
+    if(xhr.total)log('Loading: '+Math.round(xhr.loaded/xhr.total*100)+'%');
+  },
+  function(err){
+    log('ERROR: '+err.message);
+    statusEl.style.color='red';
+  }
 );
 
 function spawnChar(){
@@ -133,19 +150,19 @@ function spawnChar(){
   const clone=baseModel.clone(true);
   const box=new THREE.Box3().setFromObject(clone);
   const h=box.max.y-box.min.y;
-  clone.scale.setScalar(H*0.1/h);
+  clone.scale.setScalar(H*0.12/h);
   clone.position.set((Math.random()-0.5)*W*0.5,H/2+300,0);
   clone.rotation.set(0,Math.random()<0.5?0:Math.PI,0);
 
   const mixer=new THREE.AnimationMixer(clone);
-  if(animations&&animations.length){
-    const idx=3;
-    mixer.clipAction(animations[idx]).play();
+  if(animationsArr&&animationsArr.length){
+    mixer.clipAction(animationsArr[1]||animationsArr[0]).play();
   }
   mixers.push(mixer);
-  clone.userData={vx:(Math.random()-0.5)*60,vy:0,age:0,life:20+Math.random()*12};
+  clone.userData={vx:(Math.random()-0.5)*60,vy:0,age:0,life:25+Math.random()*12};
   scene.add(clone);
   characters.push(clone);
+  log('Spawned char #'+characters.length);
 }
 
 function findGround(x,y){
@@ -193,7 +210,7 @@ function animate(ts){
 
   if(characters.length<5&&ts>_ns&&baseModel){
     spawnChar();
-    _ns=ts+2000+Math.random()*3000;
+    _ns=ts+2500+Math.random()*3500;
   }
 
   updateChars(dt);
@@ -208,9 +225,7 @@ window.addEventListener('resize',function(){
   camera.updateProjectionMatrix();
 });
 
-window.addEventListener('scroll',function(){
-  scrollY=window.scrollY;
-},{passive:true});
+window.addEventListener('scroll',function(){scrollY=window.scrollY},{passive:true});
 
 scanTextBlocks();
 requestAnimationFrame(animate);
