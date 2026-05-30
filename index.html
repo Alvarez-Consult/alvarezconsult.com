@@ -76,8 +76,7 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 </header>
 
 <main>
-  <section><div class="hero-content">
-    <div class="hero-sub">Custom AI Solutions</div>
+  <section><div class="hero-content"><div class="hero-sub">Custom AI Solutions</div>
     <div class="hero-line" data-3d><span>We build</span></div>
     <div class="hero-line" data-3d><span>intelligence</span></div>
     <div class="hero-line" data-3d><span>into systems.</span></div>
@@ -86,18 +85,14 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
   </div></section>
   <section id="statement"><div class="statement">
     <h2 data-3d>Most consultancies sell <em>AI</em>.<br>We deliver <em>outcomes</em>.</h2>
-    <p>Your data, your rules, your pace. We embed machine intelligence where it actually matters.</p>
+    <p>Your data, your rules, your pace.</p>
   </div></section>
   <section id="capabilities"><div class="capabilities">
-    <div class="cap-item"><div class="cap-index">01</div><h3 data-3d>Strategy</h3><p>We find the seams in your operations where AI compounds value.</p></div>
-    <div class="cap-item"><div class="cap-index">02</div><h3 data-3d>Build</h3><p>Custom models, agents, and pipelines. Prototype to production in weeks.</p></div>
-    <div class="cap-item"><div class="cap-index">03</div><h3 data-3d>Embed</h3><p>Deep integration. Your team inherits the codebase. Zero lock-in.</p></div>
+    <div class="cap-item"><div class="cap-index">01</div><h3 data-3d>Strategy</h3><p>AI that compounds value.</p></div>
+    <div class="cap-item"><div class="cap-index">02</div><h3 data-3d>Build</h3><p>Prototype to production in weeks.</p></div>
+    <div class="cap-item"><div class="cap-index">03</div><h3 data-3d>Embed</h3><p>Deep integration. Zero lock-in.</p></div>
   </div></section>
-  <section id="contact"><div class="contact-section">
-    <h2>Let's talk.</h2>
-    <p>We take on a handful of clients at a time. If you think we'd be a fit, reach out.</p>
-    <a href="mailto:hello@alvarezconsult.com?subject=Let's%20talk" class="contact-link-main">hello@alvarezconsult.com</a>
-  </div></section>
+  <section id="contact"><div class="contact-section"><h2>Let's talk.</h2><p>We take on a handful of clients at a time.</p><a href="mailto:hello@alvarezconsult.com?subject=Let's%20talk" class="contact-link-main">hello@alvarezconsult.com</a></div></section>
 </main>
 <footer class="footer"><span>© 2026 Alvarez-Consult</span><span>Sevilla · Madrid</span></footer>
 
@@ -110,162 +105,200 @@ import * as THREE from 'three';
 const canvas=document.getElementById('sim');
 const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-
-let W=window.innerWidth, H=window.innerHeight, scrollY=0;
+let W=window.innerWidth,H=window.innerHeight,scrollY=0;
 renderer.setSize(W,H);
 
 const scene=new THREE.Scene();
-const camera=new THREE.OrthographicCamera(-W/2,W/2,H/2,-H/2,1,2000);
-camera.position.z=500;
+const camera=new THREE.OrthographicCamera(-W/2,W/2,H/2,-H/2,1,2000);camera.position.z=500;
 
-const ambient=new THREE.AmbientLight(0x334466,2);
-scene.add(ambient);
-const light1=new THREE.DirectionalLight(0x8b5cf6,2.5);light1.position.set(0.8,0.3,1);scene.add(light1);
-const light2=new THREE.DirectionalLight(0x06b6d4,1.5);light2.position.set(-0.6,0.1,0.3);scene.add(light2);
+const ambient=new THREE.AmbientLight(0x334466,2);scene.add(ambient);
+scene.add(new THREE.DirectionalLight(0x8b5cf6,2.5)).position.set(0.8,0.3,1);
+scene.add(new THREE.DirectionalLight(0x06b6d4,1.5)).position.set(-0.6,0.1,0.3);
+scene.add(new THREE.DirectionalLight(0xffffff,0.8)).position.set(0,0,1);
 
-// ── Text Block Scanner ──
+// ── Text blocks ──
 const textBlocks=[];
-
 function scanTextBlocks(){
-  while(textBlocks.length){
-    const b=textBlocks.pop();
-    scene.remove(b.mesh);
-    if(b.mesh.geometry)b.mesh.geometry.dispose();
-    if(b.mesh.material)b.mesh.material.dispose();
-  }
+  while(textBlocks.length){const b=textBlocks.pop();scene.remove(b.mesh);b.mesh.geometry.dispose();b.mesh.material.dispose()}
   document.querySelectorAll('[data-3d]').forEach(el=>{
-    const rect=el.getBoundingClientRect();
-    if(rect.bottom<0||rect.top>H+100)return;
-    const cx=rect.left+rect.width/2-W/2;
-    const cy=H/2-(rect.top+rect.height/2);
-    const w=rect.width, h=rect.height;
-    const geo=new THREE.BoxGeometry(w+20, h+10, 30);
-    const mat=new THREE.MeshStandardMaterial({color:0x1a1a35,metalness:0.1,roughness:0.9,transparent:true,opacity:0.4});
+    const r=el.getBoundingClientRect();
+    if(r.bottom<0||r.top>H+100)return;
+    const geo=new THREE.BoxGeometry(r.width+20,r.height+10,30);
+    const mat=new THREE.MeshStandardMaterial({color:0x1a1a35,metalness:0.1,roughness:0.9,transparent:true,opacity:0.35});
     const mesh=new THREE.Mesh(geo,mat);
-    mesh.position.set(cx, cy, 0);
+    mesh.position.set(r.left+r.width/2-W/2,H/2-(r.top+r.height/2),0);
     scene.add(mesh);
-    textBlocks.push({el,mesh,cx,cy,w:rect.width,h:rect.height});
+    textBlocks.push({mesh,cx:r.left+r.width/2-W/2,cy:H/2-(r.top+r.height/2),w:r.width,h:r.height});
   });
 }
 
-// ── Robot Builder ──
-const robotTemplate=new THREE.Group();
-
-function makeSim(colorHex){
+// ── Detailed Humanoid Character ──
+function makePerson(colorHex,skinHex){
   const g=new THREE.Group();
-  const skin=new THREE.MeshStandardMaterial({color:colorHex,metalness:0.3,roughness:0.5});
-  const dark=new THREE.MeshStandardMaterial({color:0x111122,metalness:0.5,roughness:0.4});
-  const glow=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:1});
 
-  // Shoes
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(7,3,10),dark)).position.set(-5,-31,0);
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(7,3,10),dark)).position.set(5,-31,0);
-  // Legs
-  const ll=new THREE.Mesh(new THREE.BoxGeometry(4,22,4),dark);ll.position.set(-4,-18,0);ll.name='ll';g.add(ll);
-  const rl=new THREE.Mesh(new THREE.BoxGeometry(4,22,4),dark);rl.position.set(4,-18,0);rl.name='rl';g.add(rl);
-  // Pelvis
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(16,5,10),dark)).position.y=-7;
-  // Torso
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(18,24,12),skin)).position.y=5;
-  // Chest detail
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(12,8,12.5),dark)).position.y=12;
-  // Neck
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(3,4,5,12),dark)).position.y=20;
-  // Head
-  const head=new THREE.Mesh(new THREE.SphereGeometry(8,28,28),skin);head.position.y=27;g.add(head);
-  // Hair/helmet
-  const helmet=new THREE.Mesh(new THREE.SphereGeometry(8.8,24,12,0,Math.PI*2,0,Math.PI*0.55),dark);
-  helmet.position.y=28;g.add(helmet);
+  const bodyMat=new THREE.MeshStandardMaterial({color:colorHex,metalness:0.25,roughness:0.5});
+  const darkMat=new THREE.MeshStandardMaterial({color:0x0e0e22,metalness:0.4,roughness:0.45});
+  const skinMat=new THREE.MeshStandardMaterial({color:skinHex,metalness:0.15,roughness:0.6});
+  const glowMat=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:1});
+
+  // ── Feet with toes ──
+  function makeFoot(x){const f=new THREE.Group();
+    f.add(new THREE.Mesh(new THREE.BoxGeometry(6,3,9),darkMat)).position.y=-1.5;
+    for(let t=-2;t<=2;t++)f.add(new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.6,2,6),darkMat)).position.set(t*1.1,0,3);
+    f.position.set(x,-32,0);return f;}
+  const lf=makeFoot(-4.5);const rf=makeFoot(4.5);g.add(lf);g.add(rf);
+
+  // ── Lower legs ──
+  const lll=new THREE.Mesh(new THREE.BoxGeometry(3,14,4),darkMat);lll.position.set(-4.5,-18,0);lll.name='lll';g.add(lll);
+  const rll=new THREE.Mesh(new THREE.BoxGeometry(3,14,4),darkMat);rll.position.set(4.5,-18,0);rll.name='rll';g.add(rll);
+  // Knees
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(2.2,8,8),darkMat)).position.set(-4.5,-11,0);
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(2.2,8,8),darkMat)).position.set(4.5,-11,0);
+  // Upper legs (thighs)
+  const lul=new THREE.Mesh(new THREE.BoxGeometry(4,12,5),bodyMat);lul.position.set(-4.5,-4,0);lul.name='lul';g.add(lul);
+  const rul=new THREE.Mesh(new THREE.BoxGeometry(4,12,5),bodyMat);rul.position.set(4.5,-4,0);rul.name='rul';g.add(rul);
+
+  // ── Pelvis ──
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(14,5,9),darkMat)).position.y=-8;
+
+  // ── Torso ──
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(16,22,11),bodyMat)).position.y=4;
+  // Waist detail
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(17,3,12),darkMat)).position.y=-2;
+  // Chest
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(18,8,12),bodyMat)).position.y=14;
+  // Belt
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(15,2,11.5),darkMat)).position.y=-5;
+
+  // ── Neck ──
+  g.add(new THREE.Mesh(new THREE.CylinderGeometry(2.5,3.5,5,12),skinMat)).position.y=19;
+
+  // ── Head ──
+  const head=new THREE.Mesh(new THREE.SphereGeometry(7.5,32,32),skinMat);head.position.y=26;g.add(head);
+  // Jaw
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(11,4,9),skinMat)).position.y=24;
+  // Hair
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(8,24,12,0,Math.PI*2,0,Math.PI*0.55),darkMat)).position.y=27;
+  // Nose
+  g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.6,1,2.5,8),skinMat)).position.set(0,25.5,6.5);
   // Eyes
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(2,10,10),glow)).position.set(-2.5,27,6);
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(2,10,10),glow)).position.set(2.5,27,6);
-  // Arms
-  const la=new THREE.Mesh(new THREE.BoxGeometry(4,18,4),dark);la.position.set(-12,4,0);la.name='la';g.add(la);
-  const ra=new THREE.Mesh(new THREE.BoxGeometry(4,18,4),dark);ra.position.set(12,4,0);ra.name='ra';g.add(ra);
-  // Hands
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(3.5,8,8),skin)).position.set(-12,-6,0);
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(3.5,8,8),skin)).position.set(12,-6,0);
-  // Antenna
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(1,1,8,8),dark)).position.y=36;
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(2,8,8),glow)).position.y=41;
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(1.4,10,10),glowMat)).position.set(-2.2,26.5,5.8);
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(1.4,10,10),glowMat)).position.set(2.2,26.5,5.8);
+  // Mouth
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(3,0.8,0.5),darkMat)).position.set(0,23.5,6.5);
 
-  g.userData={ll,rl,la,ra,phase:Math.random()*Math.PI*2,vx:0,vy:0,grounded:false,target:null,life:0};
+  // ── Shoulders ──
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(3,10,10),darkMat)).position.set(-9.5,14,0);
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(3,10,10),darkMat)).position.set(9.5,14,0);
+
+  // ── Upper arms ──
+  const lua=new THREE.Mesh(new THREE.BoxGeometry(3.5,11,4),bodyMat);lua.position.set(-9.5,7,0);lua.name='lua';g.add(lua);
+  const rua=new THREE.Mesh(new THREE.BoxGeometry(3.5,11,4),bodyMat);rua.position.set(9.5,7,0);rua.name='rua';g.add(rua);
+  // Elbows
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(2,8,8),darkMat)).position.set(-9.5,1,0);
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(2,8,8),darkMat)).position.set(9.5,1,0);
+  // Forearms
+  const lfa=new THREE.Mesh(new THREE.BoxGeometry(3,10,3.5),darkMat);lfa.position.set(-9.5,-4,0);lfa.name='lfa';g.add(lfa);
+  const rfa=new THREE.Mesh(new THREE.BoxGeometry(3,10,3.5),darkMat);rfa.position.set(9.5,-4,0);rfa.name='rfa';g.add(rfa);
+  // Wrists
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(1.8,8,8),darkMat)).position.set(-9.5,-9.5,0);
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(1.8,8,8),darkMat)).position.set(9.5,-9.5,0);
+  // Hands with fingers
+  function makeHand(x){const h=new THREE.Group();
+    h.add(new THREE.Mesh(new THREE.BoxGeometry(3.5,2.5,2),skinMat));
+    for(let f=-1.5;f<=1.5;f+=0.75)h.add(new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.55,3.5,6),skinMat)).position.set(f,-2.5,0);
+    h.add(new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.6,2.5,6),skinMat)).position.set(-2.5,-2,0);
+    h.position.set(x,-11,0);return h;}
+  g.add(makeHand(-9.5));g.add(makeHand(9.5));
+
+  // ── Antenna / data halo ──
+  g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.8,6,8),darkMat)).position.y=34;
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(2,8,8),glowMat)).position.y=38;
+
+  // Build limb pivot hierarchy
+  const lHip=new THREE.Group();lHip.position.set(-4.5,-2,0);g.add(lHip);lHip.add(lll);lHip.add(lf);
+  const rHip=new THREE.Group();rHip.position.set(4.5,-2,0);g.add(rHip);rHip.add(rll);rHip.add(rf);
+
+  const lShldr=new THREE.Group();lShldr.position.set(-9.5,14,0);g.add(lShldr);lShldr.add(lua);
+  const rShldr=new THREE.Group();rShldr.position.set(9.5,14,0);g.add(rShldr);rShldr.add(rua);
+  const lElbow=new THREE.Group();lElbow.position.set(0,-6,0);lShldr.add(lElbow);lElbow.add(lfa);
+  const rElbow=new THREE.Group();rElbow.position.set(0,-6,0);rShldr.add(rElbow);rElbow.add(rfa);
+
+  g.userData={
+    lHip,rHip,lShldr,rShldr,lElbow,rElbow,
+    lfa,rfa,
+    phase:Math.random()*Math.PI*2,
+    vx:0,vy:0,grounded:false,age:0,life:14+Math.random()*8,
+    walkSpeed:60+Math.random()*40
+  };
   return g;
 }
 
-// ── Physics world (simplified custom) ──
-const GRAVITY=600;
+// ── Physics ──
+const GRAVITY=800;
 const robots=[];
 
 function spawnRobot(){
-  const s=H*0.08;
-  const color=Math.random()<0.5?0xaa88ff:0x66bbdd;
-  const rob=makeSim(color);
-  rob.scale.setScalar(s/60);
-  rob.position.set((Math.random()-0.5)*W*0.7, H/2+100, 0);
-  rob.userData.vx=(Math.random()-0.5)*80;
+  const colors=[[0x9966dd,0xd4b8ff],[0x5599cc,0xb8d8ff],[0x8844bb,0xccaaff],[0x3377aa,0xaaddff]];
+  const [color,skin]=colors[Math.floor(Math.random()*colors.length)];
+  const rob=makePerson(color,skin);
+  const s=H*0.09;
+  rob.scale.setScalar(s/70);
+  rob.position.set((Math.random()-0.5)*W*0.6,H/2+200,0);
+  rob.userData.vx=(Math.random()-0.5)*60;
   rob.userData.vy=0;
-  rob.userData.life=12+Math.random()*8;
-  rob.userData.age=0;
   scene.add(rob);
   robots.push(rob);
-  return rob;
 }
 
 function findGround(x,y){
   let top=-H;
   for(const b of textBlocks){
-    const bx=b.cx,by=b.cy,bw=b.w,bh=b.h;
-    if(x>bx-bw/2-10&&x<bx+bw/2+10&&y>by-bh/2-10){
-      if(by+bh/2>top)top=by+bh/2;
+    if(x>b.cx-b.w/2-15&&x<b.cx+b.w/2+15&&y>b.cy-b.h/2-15){
+      if(b.cy+b.h/2>top)top=b.cy+b.h/2;
     }
   }
-  // Also screen bounds (bottom edge as ground)
-  if(-H/2>top)top=-H/2;
-  return top;
+  return Math.max(top,-H/2);
 }
 
 function updateRobots(dt){
   for(let i=robots.length-1;i>=0;i--){
-    const r=robots[i];
-    const ud=r.userData;
+    const r=robots[i],ud=r.userData;
     ud.age+=dt;
-    ud.phase+=dt*6;
 
-    // Gravity
     ud.vy-=GRAVITY*dt;
-    r.position.y+=ud.vy*dt;
     r.position.x+=ud.vx*dt;
+    r.position.y+=ud.vy*dt;
 
-    // Ground collision
     const ground=findGround(r.position.x,r.position.y);
-    const footY=r.position.y-ud.phase*0; // robot feet approximate
-    if(r.position.y<ground+5){
-      r.position.y=ground+5;
-      ud.vy=0;
-      ud.grounded=true;
-    }else{ud.grounded=false}
+    const footY=r.position.y;
+    if(footY<ground+3){r.position.y=ground+3;ud.vy=0;ud.grounded=true}else ud.grounded=false;
 
-    // Bounce off screen edges
-    if(r.position.x<-W/2+50){r.position.x=-W/2+50;ud.vx=Math.abs(ud.vx)}
-    if(r.position.x>W/2-50){r.position.x=W/2-50;ud.vx=-Math.abs(ud.vx)}
+    if(r.position.x<-W/2+80){r.position.x=-W/2+80;ud.vx=Math.abs(ud.vx)}
+    if(r.position.x>W/2-80){r.position.x=W/2-80;ud.vx=-Math.abs(ud.vx)}
+    if(Math.random()<dt*0.15)ud.vx=(Math.random()-0.5)*ud.walkSpeed*2;
 
-    // Random direction changes
-    if(Math.random()<dt*0.3)ud.vx=(Math.random()-0.5)*150;
+    // ── Full-body walking animation ──
+    const lp=ud.phase+=dt*5;
+    const swing=Math.sin(lp)*0.35;
+    const stride=ud.grounded?1:0.3;
 
-    // Animate legs/arms if grounded
-    if(ud.grounded){
-      ud.ll.rotation.x=Math.sin(ud.phase)*0.2;
-      ud.rl.rotation.x=-Math.sin(ud.phase)*0.2;
-      ud.la.rotation.z=0.2+Math.sin(ud.phase)*0.15;
-      ud.ra.rotation.z=-0.2-Math.sin(ud.phase)*0.15;
-    }
+    // Legs: hip rotation
+    ud.lHip.rotation.x=swing*stride;
+    ud.rHip.rotation.x=-swing*stride;
+    // Arms: opposite swing to legs
+    ud.lShldr.rotation.x=-swing*stride;
+    ud.rShldr.rotation.x=swing*stride;
+    // Elbow bend
+    ud.lElbow.rotation.x=-0.4-Math.abs(swing)*stride*0.5;
+    ud.rElbow.rotation.x=-0.4-Math.abs(swing)*stride*0.5;
+    // Bob
+    r.position.y=ground+3+Math.abs(Math.sin(lp*1.2))*3*stride;
 
     // Fade in/out
-    const fade=ud.age<1.5?ud.age/1.5:ud.age>ud.life-1.5?Math.max(0,(ud.life-ud.age)/1.5):1;
-    r.traverse(c=>{if(c.material&&c.material.opacity!==undefined&&!c.material.emissive)c.material.opacity=0.7*fade});
+    const fade=ud.age<1.5?ud.age/1.5:ud.age>ud.life-2?Math.max(0,(ud.life-ud.age)/2):1;
+    r.traverse(c=>{if(c.material&&c.material.opacity!==undefined&&!c.material.emissive)c.material.opacity=0.75*fade});
 
-    // Remove old
     if(ud.age>ud.life){scene.remove(r);robots.splice(i,1)}
   }
 }
@@ -274,33 +307,19 @@ function animate(ts){
   requestAnimationFrame(animate);
   const dt=Math.min((ts-(animate._t||ts))/1000,0.1);animate._t=ts;
 
-  // Rescan text blocks
   scanTextBlocks();
 
-  // Spawn/manage robots
-  if(robots.length<4&&(!animate._ns||ts>animate._ns)){spawnRobot();animate._ns=ts+2000+Math.random()*3000}
+  if(robots.length<5&&(!animate._ns||ts>animate._ns)){spawnRobot();animate._ns=ts+1800+Math.random()*2500}
 
   updateRobots(dt);
-
-  // Follow scroll: camera offset
-  camera.updateProjectionMatrix();
-
   renderer.render(scene,camera);
 }
 animate._t=0;
 
-window.addEventListener('resize',()=>{
-  W=window.innerWidth;H=window.innerHeight;
-  renderer.setSize(W,H);
-  camera.left=-W/2;camera.right=W/2;camera.top=H/2;camera.bottom=-H/2;
-  camera.updateProjectionMatrix();
-});
+window.addEventListener('resize',()=>{W=window.innerWidth;H=window.innerHeight;renderer.setSize(W,H);camera.left=-W/2;camera.right=W/2;camera.top=H/2;camera.bottom=-H/2;camera.updateProjectionMatrix()});
 window.addEventListener('scroll',()=>{scrollY=window.scrollY},{passive:true});
 
-// Init
-scanTextBlocks();
-spawnRobot();spawnRobot();
-requestAnimationFrame(animate);
+scanTextBlocks();spawnRobot();spawnRobot();requestAnimationFrame(animate);
 
 // Cursor
 const cursor=document.querySelector('.cursor'),ring=document.querySelector('.cursor-ring');
@@ -308,8 +327,7 @@ let mx=0,my=0,rX=0,rY=0;
 document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
 (function animCur(){rX+=(mx-rX)*0.15;rY+=(my-rY)*0.15;cursor.style.left=rX+'px';cursor.style.top=rY+'px';ring.style.left=mx+'px';ring.style.top=my+'px';requestAnimationFrame(animCur)})();
 document.querySelectorAll('a,button,.cap-item').forEach(el=>{el.addEventListener('mouseenter',()=>ring.classList.add('hover'));el.addEventListener('mouseleave',()=>ring.classList.remove('hover'))});
-const hdr=document.getElementById('header');
-window.addEventListener('scroll',()=>hdr.classList.toggle('scrolled',scrollY>30),{passive:true});
+const hdr=document.getElementById('header');window.addEventListener('scroll',()=>hdr.classList.toggle('scrolled',scrollY>30),{passive:true});
 </script>
 </body>
 </html>
