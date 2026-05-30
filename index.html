@@ -174,7 +174,7 @@ class Scene{
     cx.beginPath();cx.moveTo(this.x+15,this.y+this.h*0.45);cx.lineTo(this.x+this.w-15,this.y+this.h*0.45);cx.stroke();
 
     // Props
-    ctx.fillStyle='rgba(139,92,246,0.15)';
+    cx.fillStyle='rgba(139,92,246,0.15)';
     for(const p of this.props){cx.beginPath();cx.arc(p.x,p.y,p.size,0,Math.PI*2);cx.fill();}
 
     // Robot
