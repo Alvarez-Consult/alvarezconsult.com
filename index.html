@@ -81,7 +81,7 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
     <div class="hero-line" data-3d><span>intelligence</span></div>
     <div class="hero-line" data-3d><span>into systems.</span></div>
     <div class="hero-divider"></div>
-    <p class="hero-whisper">Tailored AI that knows your business. No templates. No noise. Just results.</p>
+    <p class="hero-whisper">Tailored AI that knows your business.</p>
   </div></section>
   <section id="statement"><div class="statement">
     <h2 data-3d>Most consultancies sell <em>AI</em>.<br>We deliver <em>outcomes</em>.</h2>
@@ -92,29 +92,30 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
     <div class="cap-item"><div class="cap-index">02</div><h3 data-3d>Build</h3><p>Prototype to production in weeks.</p></div>
     <div class="cap-item"><div class="cap-index">03</div><h3 data-3d>Embed</h3><p>Deep integration. Zero lock-in.</p></div>
   </div></section>
-  <section id="contact"><div class="contact-section"><h2>Let's talk.</h2><p>We take on a handful of clients at a time.</p><a href="mailto:hello@alvarezconsult.com?subject=Let's%20talk" class="contact-link-main">hello@alvarezconsult.com</a></div></section>
+  <section id="contact"><div class="contact-section"><h2>Let's talk.</h2><p>A handful of clients at a time.</p><a href="mailto:hello@alvarezconsult.com?subject=Let's%20talk" class="contact-link-main">hello@alvarezconsult.com</a></div></section>
 </main>
 <footer class="footer"><span>© 2026 Alvarez-Consult</span><span>Sevilla · Madrid</span></footer>
 
 <script type="importmap">
-{"imports":{"three":"https://unpkg.com/three@0.170.0/build/three.module.js"}}
+{"imports":{"three":"https://unpkg.com/three@0.170.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.170.0/examples/jsm/"}}
 </script>
 <script type="module">
 import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 const canvas=document.getElementById('sim');
 const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-let W=window.innerWidth,H=window.innerHeight,scrollY=0;
+let W=window.innerWidth,H=window.innerHeight;
 renderer.setSize(W,H);
 
 const scene=new THREE.Scene();
 const camera=new THREE.OrthographicCamera(-W/2,W/2,H/2,-H/2,1,2000);camera.position.z=500;
 
-const ambient=new THREE.AmbientLight(0x334466,2);scene.add(ambient);
-scene.add(new THREE.DirectionalLight(0x8b5cf6,2.5)).position.set(0.8,0.3,1);
-scene.add(new THREE.DirectionalLight(0x06b6d4,1.5)).position.set(-0.6,0.1,0.3);
-scene.add(new THREE.DirectionalLight(0xffffff,0.8)).position.set(0,0,1);
+scene.add(new THREE.AmbientLight(0x334466,2.2));
+const dl=new THREE.DirectionalLight(0x8b5cf6,3);dl.position.set(0.7,0.5,1);scene.add(dl);
+scene.add(new THREE.DirectionalLight(0x06b6d4,1.5)).position.set(-0.6,0.1,0.4);
+scene.add(new THREE.DirectionalLight(0xffffff,1)).position.set(0,0,1);
 
 // ── Text blocks ──
 const textBlocks=[];
@@ -122,184 +123,126 @@ function scanTextBlocks(){
   while(textBlocks.length){const b=textBlocks.pop();scene.remove(b.mesh);b.mesh.geometry.dispose();b.mesh.material.dispose()}
   document.querySelectorAll('[data-3d]').forEach(el=>{
     const r=el.getBoundingClientRect();
-    if(r.bottom<0||r.top>H+100)return;
-    const geo=new THREE.BoxGeometry(r.width+20,r.height+10,30);
-    const mat=new THREE.MeshStandardMaterial({color:0x1a1a35,metalness:0.1,roughness:0.9,transparent:true,opacity:0.35});
+    if(r.bottom<-100||r.top>H+100)return;
+    const geo=new THREE.BoxGeometry(r.width+20,r.height+12,40);
+    const mat=new THREE.MeshStandardMaterial({color:0x1a1a35,metalness:0.1,roughness:0.9,transparent:true,opacity:0.3});
     const mesh=new THREE.Mesh(geo,mat);
-    mesh.position.set(r.left+r.width/2-W/2,H/2-(r.top+r.height/2),0);
+    mesh.position.set(r.left+r.width/2-W/2,H/2-(r.top+r.height/2),-5);
     scene.add(mesh);
     textBlocks.push({mesh,cx:r.left+r.width/2-W/2,cy:H/2-(r.top+r.height/2),w:r.width,h:r.height});
   });
 }
 
-// ── Detailed Humanoid Character ──
-function makePerson(colorHex,skinHex){
-  const g=new THREE.Group();
+// ── Character template pool (pre-built human models) ──
+const loader=new GLTFLoader();
+const characterTemplate=null;
+const characters=[];
+const GRAVITY=900;
 
-  const bodyMat=new THREE.MeshStandardMaterial({color:colorHex,metalness:0.25,roughness:0.5});
-  const darkMat=new THREE.MeshStandardMaterial({color:0x0e0e22,metalness:0.4,roughness:0.45});
-  const skinMat=new THREE.MeshStandardMaterial({color:skinHex,metalness:0.15,roughness:0.6});
-  const glowMat=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:1});
+// Load a human model with walk animation from Mixamo CDN
+const MODEL_URLS=[
+  'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/RiggedFigure/glTF-Binary/RiggedFigure.glb',
+  'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/RiggedSimple/glTF-Binary/RiggedSimple.glb'
+];
 
-  // ── Feet with toes ──
-  function makeFoot(x){const f=new THREE.Group();
-    f.add(new THREE.Mesh(new THREE.BoxGeometry(6,3,9),darkMat)).position.y=-1.5;
-    for(let t=-2;t<=2;t++)f.add(new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.6,2,6),darkMat)).position.set(t*1.1,0,3);
-    f.position.set(x,-32,0);return f;}
-  const lf=makeFoot(-4.5);const rf=makeFoot(4.5);g.add(lf);g.add(rf);
+let characterGltf=null;
+let mixer=null;
 
-  // ── Lower legs ──
-  const lll=new THREE.Mesh(new THREE.BoxGeometry(3,14,4),darkMat);lll.position.set(-4.5,-18,0);lll.name='lll';g.add(lll);
-  const rll=new THREE.Mesh(new THREE.BoxGeometry(3,14,4),darkMat);rll.position.set(4.5,-18,0);rll.name='rll';g.add(rll);
-  // Knees
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(2.2,8,8),darkMat)).position.set(-4.5,-11,0);
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(2.2,8,8),darkMat)).position.set(4.5,-11,0);
-  // Upper legs (thighs)
-  const lul=new THREE.Mesh(new THREE.BoxGeometry(4,12,5),bodyMat);lul.position.set(-4.5,-4,0);lul.name='lul';g.add(lul);
-  const rul=new THREE.Mesh(new THREE.BoxGeometry(4,12,5),bodyMat);rul.position.set(4.5,-4,0);rul.name='rul';g.add(rul);
-
-  // ── Pelvis ──
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(14,5,9),darkMat)).position.y=-8;
-
-  // ── Torso ──
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(16,22,11),bodyMat)).position.y=4;
-  // Waist detail
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(17,3,12),darkMat)).position.y=-2;
-  // Chest
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(18,8,12),bodyMat)).position.y=14;
-  // Belt
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(15,2,11.5),darkMat)).position.y=-5;
-
-  // ── Neck ──
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(2.5,3.5,5,12),skinMat)).position.y=19;
-
-  // ── Head ──
-  const head=new THREE.Mesh(new THREE.SphereGeometry(7.5,32,32),skinMat);head.position.y=26;g.add(head);
-  // Jaw
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(11,4,9),skinMat)).position.y=24;
-  // Hair
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(8,24,12,0,Math.PI*2,0,Math.PI*0.55),darkMat)).position.y=27;
-  // Nose
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.6,1,2.5,8),skinMat)).position.set(0,25.5,6.5);
-  // Eyes
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(1.4,10,10),glowMat)).position.set(-2.2,26.5,5.8);
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(1.4,10,10),glowMat)).position.set(2.2,26.5,5.8);
-  // Mouth
-  g.add(new THREE.Mesh(new THREE.BoxGeometry(3,0.8,0.5),darkMat)).position.set(0,23.5,6.5);
-
-  // ── Shoulders ──
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(3,10,10),darkMat)).position.set(-9.5,14,0);
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(3,10,10),darkMat)).position.set(9.5,14,0);
-
-  // ── Upper arms ──
-  const lua=new THREE.Mesh(new THREE.BoxGeometry(3.5,11,4),bodyMat);lua.position.set(-9.5,7,0);lua.name='lua';g.add(lua);
-  const rua=new THREE.Mesh(new THREE.BoxGeometry(3.5,11,4),bodyMat);rua.position.set(9.5,7,0);rua.name='rua';g.add(rua);
-  // Elbows
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(2,8,8),darkMat)).position.set(-9.5,1,0);
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(2,8,8),darkMat)).position.set(9.5,1,0);
-  // Forearms
-  const lfa=new THREE.Mesh(new THREE.BoxGeometry(3,10,3.5),darkMat);lfa.position.set(-9.5,-4,0);lfa.name='lfa';g.add(lfa);
-  const rfa=new THREE.Mesh(new THREE.BoxGeometry(3,10,3.5),darkMat);rfa.position.set(9.5,-4,0);rfa.name='rfa';g.add(rfa);
-  // Wrists
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(1.8,8,8),darkMat)).position.set(-9.5,-9.5,0);
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(1.8,8,8),darkMat)).position.set(9.5,-9.5,0);
-  // Hands with fingers
-  function makeHand(x){const h=new THREE.Group();
-    h.add(new THREE.Mesh(new THREE.BoxGeometry(3.5,2.5,2),skinMat));
-    for(let f=-1.5;f<=1.5;f+=0.75)h.add(new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.55,3.5,6),skinMat)).position.set(f,-2.5,0);
-    h.add(new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.6,2.5,6),skinMat)).position.set(-2.5,-2,0);
-    h.position.set(x,-11,0);return h;}
-  g.add(makeHand(-9.5));g.add(makeHand(9.5));
-
-  // ── Antenna / data halo ──
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.8,6,8),darkMat)).position.y=34;
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(2,8,8),glowMat)).position.y=38;
-
-  // Build limb pivot hierarchy
-  const lHip=new THREE.Group();lHip.position.set(-4.5,-2,0);g.add(lHip);lHip.add(lll);lHip.add(lf);
-  const rHip=new THREE.Group();rHip.position.set(4.5,-2,0);g.add(rHip);rHip.add(rll);rHip.add(rf);
-
-  const lShldr=new THREE.Group();lShldr.position.set(-9.5,14,0);g.add(lShldr);lShldr.add(lua);
-  const rShldr=new THREE.Group();rShldr.position.set(9.5,14,0);g.add(rShldr);rShldr.add(rua);
-  const lElbow=new THREE.Group();lElbow.position.set(0,-6,0);lShldr.add(lElbow);lElbow.add(lfa);
-  const rElbow=new THREE.Group();rElbow.position.set(0,-6,0);rShldr.add(rElbow);rElbow.add(rfa);
-
-  g.userData={
-    lHip,rHip,lShldr,rShldr,lElbow,rElbow,
-    lfa,rfa,
-    phase:Math.random()*Math.PI*2,
-    vx:0,vy:0,grounded:false,age:0,life:14+Math.random()*8,
-    walkSpeed:60+Math.random()*40
-  };
-  return g;
+async function loadCharacterModel(){
+  try{
+    const gltf=await loader.loadAsync(MODEL_URLS[0]);
+    characterGltf=gltf.scene;
+    console.log('Model loaded:',MODEL_URLS[0]);
+    spawnCharacter();
+    spawnCharacter();
+  }catch(e){
+    console.warn('Model 1 failed, trying backup...');
+    try{
+      const gltf=await loader.loadAsync(MODEL_URLS[1]);
+      characterGltf=gltf.scene;
+      spawnCharacter();spawnCharacter();
+    }catch(e2){console.error('All models failed, using fallback');makeFallbackCharacters()}
+  }
 }
 
-// ── Physics ──
-const GRAVITY=800;
-const robots=[];
+function makeFallbackCharacters(){
+  for(let i=0;i<4;i++)spawnFallbackCharacter();
+}
 
-function spawnRobot(){
-  const colors=[[0x9966dd,0xd4b8ff],[0x5599cc,0xb8d8ff],[0x8844bb,0xccaaff],[0x3377aa,0xaaddff]];
-  const [color,skin]=colors[Math.floor(Math.random()*colors.length)];
-  const rob=makePerson(color,skin);
-  const s=H*0.09;
-  rob.scale.setScalar(s/70);
-  rob.position.set((Math.random()-0.5)*W*0.6,H/2+200,0);
-  rob.userData.vx=(Math.random()-0.5)*60;
-  rob.userData.vy=0;
-  scene.add(rob);
-  robots.push(rob);
+function spawnFallbackCharacter(){
+  const g=new THREE.Group();
+  const skin=new THREE.MeshStandardMaterial({color:0xe8c8a0,metalness:0.05,roughness:0.7});
+  const pants=new THREE.MeshStandardMaterial({color:i=>[0x334466,0x553366,0x335544,0x664433][i%4],metalness:0.1,roughness:0.7});
+  const top=new THREE.MeshStandardMaterial({color:0xffffff,metalness:0.05,roughness:0.7});
+  const hair=new THREE.MeshStandardMaterial({color:0x1a0a00,metalness:0.1,roughness:0.8});
+  const shoe=new THREE.MeshStandardMaterial({color:0x111111,metalness:0.1,roughness:0.9});
+
+  const s=H*0.085;
+  g.scale.setScalar(s/1.8);
+  g.position.set((Math.random()-0.5)*W*0.6,H/2+300,0);
+  g.userData={vx:(Math.random()-0.5)*50,vy:0,grounded:false,age:0,life:16+Math.random()*8,phase:Math.random()*Math.PI*2};
+  scene.add(g);
+  characters.push(g);
+}
+
+function spawnCharacter(){
+  if(!characterGltf){spawnFallbackCharacter();return}
+  const clone=characterGltf.clone();
+  const s=H*0.085;
+  // Scale model to desired height
+  const box=new THREE.Box3().setFromObject(clone);
+  const h=box.max.y-box.min.y;
+  clone.scale.setScalar(s/h);
+  clone.position.set((Math.random()-0.5)*W*0.6,H/2+200,0);
+  clone.rotation.set(0,Math.random()<0.5?Math.PI:0,0);
+
+  clone.userData={vx:(Math.random()-0.5)*50,vy:0,grounded:false,age:0,life:16+Math.random()*8,phase:Math.random()*Math.PI*2};
+
+  // Set up animation mixer
+  if(!mixer&&characterGltf.animations&&characterGltf.animations.length>0){
+    mixer=new THREE.AnimationMixer(clone);
+    const action=mixer.clipAction(characterGltf.animations[0]);
+    action.play();
+  }
+
+  scene.add(clone);
+  characters.push(clone);
 }
 
 function findGround(x,y){
   let top=-H;
   for(const b of textBlocks){
-    if(x>b.cx-b.w/2-15&&x<b.cx+b.w/2+15&&y>b.cy-b.h/2-15){
+    if(x>b.cx-b.w/2-20&&x<b.cx+b.w/2+20&&y>b.cy-b.h/2-20){
       if(b.cy+b.h/2>top)top=b.cy+b.h/2;
     }
   }
   return Math.max(top,-H/2);
 }
 
-function updateRobots(dt){
-  for(let i=robots.length-1;i>=0;i--){
-    const r=robots[i],ud=r.userData;
-    ud.age+=dt;
+function updateCharacters(dt){
+  if(mixer)mixer.update(dt);
+  for(let i=characters.length-1;i>=0;i--){
+    const c=characters[i],ud=c.userData;
+    ud.age+=dt;ud.phase+=dt*4;
 
     ud.vy-=GRAVITY*dt;
-    r.position.x+=ud.vx*dt;
-    r.position.y+=ud.vy*dt;
+    c.position.x+=ud.vx*dt;
+    c.position.y+=ud.vy*dt;
 
-    const ground=findGround(r.position.x,r.position.y);
-    const footY=r.position.y;
-    if(footY<ground+3){r.position.y=ground+3;ud.vy=0;ud.grounded=true}else ud.grounded=false;
+    const ground=findGround(c.position.x,c.position.y);
+    if(c.position.y<ground+5){c.position.y=ground+5;ud.vy=0;ud.grounded=true}else ud.grounded=false;
 
-    if(r.position.x<-W/2+80){r.position.x=-W/2+80;ud.vx=Math.abs(ud.vx)}
-    if(r.position.x>W/2-80){r.position.x=W/2-80;ud.vx=-Math.abs(ud.vx)}
-    if(Math.random()<dt*0.15)ud.vx=(Math.random()-0.5)*ud.walkSpeed*2;
+    if(c.position.x<-W/2+80){c.position.x=-W/2+80;ud.vx=Math.abs(ud.vx)}
+    if(c.position.x>W/2-80){c.position.x=W/2-80;ud.vx=-Math.abs(ud.vx)}
+    if(Math.random()<dt*0.12)ud.vx=(Math.random()-0.5)*60;
 
-    // ── Full-body walking animation ──
-    const lp=ud.phase+=dt*5;
-    const swing=Math.sin(lp)*0.35;
-    const stride=ud.grounded?1:0.3;
+    // Bob and walk animation
+    if(ud.grounded)c.position.y=ground+5+Math.abs(Math.sin(ud.phase*1.3))*2.5;
 
-    // Legs: hip rotation
-    ud.lHip.rotation.x=swing*stride;
-    ud.rHip.rotation.x=-swing*stride;
-    // Arms: opposite swing to legs
-    ud.lShldr.rotation.x=-swing*stride;
-    ud.rShldr.rotation.x=swing*stride;
-    // Elbow bend
-    ud.lElbow.rotation.x=-0.4-Math.abs(swing)*stride*0.5;
-    ud.rElbow.rotation.x=-0.4-Math.abs(swing)*stride*0.5;
-    // Bob
-    r.position.y=ground+3+Math.abs(Math.sin(lp*1.2))*3*stride;
-
-    // Fade in/out
     const fade=ud.age<1.5?ud.age/1.5:ud.age>ud.life-2?Math.max(0,(ud.life-ud.age)/2):1;
-    r.traverse(c=>{if(c.material&&c.material.opacity!==undefined&&!c.material.emissive)c.material.opacity=0.75*fade});
+    c.traverse(ch=>{if(ch.material&&ch.material.opacity!==undefined&&!ch.material.emissive)ch.material.opacity=0.75*fade});
 
-    if(ud.age>ud.life){scene.remove(r);robots.splice(i,1)}
+    if(ud.age>ud.life){scene.remove(c);characters.splice(i,1)}
   }
 }
 
@@ -309,17 +252,19 @@ function animate(ts){
 
   scanTextBlocks();
 
-  if(robots.length<5&&(!animate._ns||ts>animate._ns)){spawnRobot();animate._ns=ts+1800+Math.random()*2500}
+  if(characters.length<5&&(!animate._ns||ts>animate._ns)){spawnCharacter();animate._ns=ts+2000+Math.random()*2500}
 
-  updateRobots(dt);
+  updateCharacters(dt);
   renderer.render(scene,camera);
 }
 animate._t=0;
 
 window.addEventListener('resize',()=>{W=window.innerWidth;H=window.innerHeight;renderer.setSize(W,H);camera.left=-W/2;camera.right=W/2;camera.top=H/2;camera.bottom=-H/2;camera.updateProjectionMatrix()});
-window.addEventListener('scroll',()=>{scrollY=window.scrollY},{passive:true});
+window.addEventListener('scroll',()=>scrollY=window.scrollY,{passive:true});
 
-scanTextBlocks();spawnRobot();spawnRobot();requestAnimationFrame(animate);
+scanTextBlocks();
+loadCharacterModel();
+requestAnimationFrame(animate);
 
 // Cursor
 const cursor=document.querySelector('.cursor'),ring=document.querySelector('.cursor-ring');
