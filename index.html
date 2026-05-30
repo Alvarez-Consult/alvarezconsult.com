@@ -10,7 +10,6 @@ html{scroll-behavior:smooth}
 body{font-family:'Inter',system-ui,sans-serif;background:#05050d;color:#e4e4ec;font-weight:300;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 #sim{position:fixed;inset:0;z-index:1}
 .bg-grid{position:fixed;inset:0;z-index:0;opacity:0.025;background-image:linear-gradient(rgba(139,92,246,0.2) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,0.2) 1px,transparent 1px);background-size:80px 80px}
-.grain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");background-size:256px 256px}
 main{position:relative;z-index:3}
 section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:4rem 2rem}
 .header{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.5rem 2.5rem;display:flex;justify-content:space-between;align-items:center;transition:background 0.5s}
@@ -52,7 +51,7 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 </style>
 </head>
 <body>
-<div class="bg-grid"></div><div class="grain"></div>
+<div class="bg-grid"></div>
 <canvas id="sim"></canvas>
 
 <header class="header" id="header"><div class="wordmark">AlvarezConsult</div><a href="#contact" class="header-cta">Contact</a></header>
@@ -71,106 +70,42 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
-const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('sim'),alpha:true});
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('sim'),alpha:false});
+renderer.setClearColor(0x111122);
 renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
 
 const scene=new THREE.Scene();
-const camera=new THREE.PerspectiveCamera(50,window.innerWidth/window.innerHeight,0.1,100);
-camera.position.set(0,4,10);
-camera.lookAt(0,2,0);
+const camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,100);
+camera.position.set(0,2,7);
+camera.lookAt(0,1,0);
 
 scene.add(new THREE.AmbientLight(0xffffff,3));
-scene.add(new THREE.DirectionalLight(0xffffff,5)).position.set(2,6,4);
+scene.add(new THREE.DirectionalLight(0xffffff,5)).position.set(2,5,3);
 
-// Ground (semi-transparent)
-const ground=new THREE.Mesh(
-  new THREE.PlaneGeometry(30,30),
-  new THREE.MeshStandardMaterial({color:0x1a1a2e,roughness:0.9,transparent:true,opacity:0.5})
-);
-ground.rotation.x=-Math.PI/2;ground.position.y=-0.01;
-scene.add(ground);
+// Load one model
+new GLTFLoader().load('models/human.glb',function(gltf){
+  const model=gltf.scene;
 
-// Grid
-const grid=new THREE.GridHelper(20,20,0x333366,0x1a1a33);
-grid.position.y=0;scene.add(grid);
+  const box=new THREE.Box3().setFromObject(model);
+  const h=box.max.y-box.min.y;
+  model.scale.setScalar(3/h);
+  model.position.set(0,1.5,0);
 
-// Multiple character instances - each loaded separately
-const mixerList=[],modelList=[];
-const COLORS=[0xff5588,0x55aaff,0x55dd55,0xffdd44,0xff55ff,0x55ddff];
+  scene.add(model);
 
-function loadAndSpawn(index){
-  new GLTFLoader().load('models/human.glb',function(gltf){
-    const model=gltf.scene;
-
-    // Set color
-    const col=new THREE.Color(COLORS[index%COLORS.length]);
-    model.traverse(function(c){
-      if(c.isMesh&&c.material){
-        const mats=Array.isArray(c.material)?c.material:[c.material];
-        for(let i=0;i<mats.length;i++){
-          mats[i].color=col;
-          mats[i].emissive=col.clone().multiplyScalar(0.3);
-          mats[i].emissiveIntensity=0.4;
-          mats[i].needsUpdate=true;
-        }
-      }
-    });
-
-    // Scale
-    const box=new THREE.Box3().setFromObject(model);
-    const h=box.max.y-box.min.y;
-    model.scale.setScalar(3.5/h);
-
-    // Position above ground, spread out
-    model.position.set(
-      (index-2)*3,
-      2,
-      (index-2)*1.5
-    );
-    model.rotation.set(0,index*0.8,0);
-
-    scene.add(model);
-    modelList.push(model);
-
-    // Animate
+  if(gltf.animations.length){
     const mixer=new THREE.AnimationMixer(model);
-    if(gltf.animations.length)mixer.clipAction(gltf.animations[1]||gltf.animations[0]).play();
-    mixerList.push(mixer);
-
-    console.log('Spawned char',index);
-  });
-}
-
-// Load 6 separate instances
-for(let i=0;i<6;i++)loadAndSpawn(i);
-
-const clock=new THREE.Clock();
-function animate(){
-  requestAnimationFrame(animate);
-  const dt=Math.min(clock.getDelta(),0.1);
-
-  for(let i=0;i<mixerList.length;i++)mixerList[i].update(dt);
-
-  // Move characters
-  for(let i=0;i<modelList.length;i++){
-    const m=modelList[i];
-    m.position.x+=Math.sin(Date.now()*0.001+i)*0.02;
-    m.position.z+=Math.cos(Date.now()*0.001+i)*0.02;
-    m.rotation.y+=dt*0.3;
-    m.position.y=2+Math.sin(Date.now()*0.002+i)*0.3;
+    mixer.clipAction(gltf.animations[0]).play();
+    const clock=new THREE.Clock();
+    function anim(){
+      requestAnimationFrame(anim);
+      mixer.update(Math.min(clock.getDelta(),0.1));
+      model.rotation.y+=0.005;
+      renderer.render(scene,camera);
+    }
+    anim();
   }
-
-  camera.position.x=Math.sin(Date.now()*0.0002)*4;
-  camera.lookAt(0,2,0);
-  renderer.render(scene,camera);
-}
-requestAnimationFrame(animate);
-
-window.addEventListener('resize',function(){
-  renderer.setSize(window.innerWidth,window.innerHeight);
-  camera.aspect=window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
+  console.log('Loaded');
 });
 </script>
 </body>
