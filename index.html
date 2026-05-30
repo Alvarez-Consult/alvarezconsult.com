@@ -3,19 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Custom AI solutions.">
 <title>Alvarez-Consult</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600&display=swap');
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{font-family:'Inter',system-ui,sans-serif;background:#05050d;color:#e4e4ec;font-weight:300;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-::selection{background:rgba(139,92,246,0.3);color:#fff}
-.cursor{position:fixed;width:8px;height:8px;border-radius:50%;background:#8b5cf6;pointer-events:none;z-index:9999;mix-blend-mode:exclusion;transition:transform 0.15s;transform:translate(-50%,-50%)}
-.cursor-ring{position:fixed;width:36px;height:36px;border-radius:50%;border:1px solid rgba(139,92,246,0.3);pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:transform 0.3s cubic-bezier(0.22,1,0.36,1),width 0.3s,height 0.3s,border-color 0.3s}
-.cursor-ring.hover{width:56px;height:56px;border-color:rgba(139,92,246,0.6)}
 #sim{position:fixed;inset:0;z-index:1}
-#status{position:fixed;bottom:20px;left:20px;z-index:200;color:#8b5cf6;font-size:12px;font-family:monospace;opacity:0.7}
 .bg-grid{position:fixed;inset:0;z-index:0;opacity:0.025;background-image:linear-gradient(rgba(139,92,246,0.2) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,0.2) 1px,transparent 1px);background-size:80px 80px}
 .grain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");background-size:256px 256px}
 .ambient{position:fixed;z-index:0;pointer-events:none}
@@ -58,15 +52,13 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 .contact-link-main:hover::before{transform:translateX(100%)}
 .contact-link-main:hover{border-color:rgba(139,92,246,0.5);box-shadow:0 0 30px rgba(139,92,246,0.1)}
 .footer{position:fixed;bottom:0;left:0;right:0;z-index:100;padding:1.5rem 2.5rem;display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;color:#52525b;letter-spacing:0.06em}
-@media(max-width:768px){.capabilities{grid-template-columns:1fr}.header,.footer{padding:1rem 1.5rem}section{padding:6rem 1.5rem}.cursor,.cursor-ring{display:none}.header-cta,.contact-link-main,.cap-item{cursor:pointer}}
+@media(max-width:768px){.capabilities{grid-template-columns:1fr}.header,.footer{padding:1rem 1.5rem}section{padding:6rem 1.5rem}}
 </style>
 </head>
 <body>
-<div class="cursor"></div><div class="cursor-ring"></div>
 <div class="bg-grid"></div><div class="grain"></div>
 <div class="ambient ambient-1"></div><div class="ambient ambient-2"></div>
 <canvas id="sim"></canvas>
-<div id="status">loading...</div>
 
 <header class="header" id="header"><div class="wordmark">AlvarezConsult</div><a href="#contact" class="header-cta">Contact</a></header>
 <main>
@@ -84,9 +76,6 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
-const statusEl=document.getElementById('status');
-function log(m){statusEl.textContent=m;console.log(m)}
-
 const canvas=document.getElementById('sim');
 const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
@@ -95,11 +84,9 @@ let W=window.innerWidth,H=window.innerHeight;renderer.setSize(W,H);
 const scene=new THREE.Scene();
 const camera=new THREE.OrthographicCamera(-W/2,W/2,H/2,-H/2,1,2000);camera.position.z=500;
 
-scene.add(new THREE.AmbientLight(0x445566,2));
-const dl=new THREE.DirectionalLight(0xccbbff,3);dl.position.set(0.7,0.4,1);scene.add(dl);
-scene.add(new THREE.DirectionalLight(0x88ccff,1.5)).position.set(-0.5,0.1,0.4);
-
-log('Three.js loaded');
+scene.add(new THREE.AmbientLight(0x8899bb,2.5));
+const dl=new THREE.DirectionalLight(0xffffff,3);dl.position.set(0.5,0.5,1);scene.add(dl);
+scene.add(new THREE.DirectionalLight(0x8888ff,1.5)).position.set(-0.5,0,0.5);
 
 // Text blocks
 const textBlocks=[];
@@ -109,7 +96,7 @@ function scanTextBlocks(){
     const r=el.getBoundingClientRect();
     if(r.bottom<-100||r.top>H+100)return;
     const geo=new THREE.BoxGeometry(r.width+24,r.height+14,45);
-    const mat=new THREE.MeshStandardMaterial({color:0x1a1a35,metalness:0.1,roughness:0.9,transparent:true,opacity:0.3});
+    const mat=new THREE.MeshStandardMaterial({color:0x222244,metalness:0.1,roughness:0.9,transparent:true,opacity:0.4});
     const mesh=new THREE.Mesh(geo,mat);
     mesh.position.set(r.left+r.width/2-W/2,H/2-(r.top+r.height/2),-5);
     scene.add(mesh);
@@ -117,52 +104,49 @@ function scanTextBlocks(){
   });
 }
 
-// Animated characters
-let baseModel=null,animationsArr=null;
-const characters=[],mixers=[];
+let baseModel=null,bones=null;
+const chars=[],mixers=[];
 const GRAVITY=1000;
-const loader=new GLTFLoader();
 let scrollY=0;
 
-log('Loading model...');
-
-loader.load(
-  'https://alvarezconsult.com/models/human.glb',
+new GLTFLoader().load(
+  'models/human.glb',
   function(gltf){
-    baseModel=gltf.scene;
-    animationsArr=gltf.animations;
-    log('Model OK: '+animationsArr.length+' anims');
-    // Hide status
-    setTimeout(function(){statusEl.style.display='none'},2000);
-    spawnChar();spawnChar();spawnChar();
+    baseModel=gltf.scene;bones=gltf.animations;
+    console.log('Model OK:',bones.length,'anims');
+    // Spawn visible test chars immediately in view
+    for(let i=0;i<4;i++)spawnChar();
   },
-  function(xhr){
-    if(xhr.total)log('Loading: '+Math.round(xhr.loaded/xhr.total*100)+'%');
-  },
-  function(err){
-    log('ERROR: '+err.message);
-    statusEl.style.color='red';
-  }
+  function(xhr){if(xhr.total)console.log(Math.round(xhr.loaded/xhr.total*100)+'%')},
+  function(err){console.error('ERROR:',err)}
 );
 
 function spawnChar(){
   if(!baseModel)return;
   const clone=baseModel.clone(true);
   const box=new THREE.Box3().setFromObject(clone);
-  const h=box.max.y-box.min.y;
-  clone.scale.setScalar(H*0.12/h);
-  clone.position.set((Math.random()-0.5)*W*0.5,H/2+300,0);
-  clone.rotation.set(0,Math.random()<0.5?0:Math.PI,0);
+  const modelH=box.max.y-box.min.y;
+  clone.scale.setScalar(H*0.1/modelH);
+  // Spawn at a random visible position
+  clone.position.set((Math.random()-0.5)*W*0.5,(Math.random()-0.5)*H*0.7,0);
+  clone.rotation.set(0,Math.random()*Math.PI*2,0);
 
   const mixer=new THREE.AnimationMixer(clone);
-  if(animationsArr&&animationsArr.length){
-    mixer.clipAction(animationsArr[1]||animationsArr[0]).play();
+  if(bones&&bones.length){
+    mixer.clipAction(bones[1]||bones[0]).play();
   }
   mixers.push(mixer);
   clone.userData={vx:(Math.random()-0.5)*60,vy:0,age:0,life:25+Math.random()*12};
   scene.add(clone);
-  characters.push(clone);
-  log('Spawned char #'+characters.length);
+  chars.push(clone);
+
+  // Add glow ring
+  const ringGeo=new THREE.TorusGeometry(modelH*0.06,0.5,8,24);
+  const ringMat=new THREE.MeshBasicMaterial({color:0x8b5cf6,transparent:true,opacity:0.5});
+  const ring=new THREE.Mesh(ringGeo,ringMat);
+  ring.rotation.x=Math.PI/2;
+  ring.position.y=-modelH*0.035;
+  clone.add(ring);
 }
 
 function findGround(x,y){
@@ -177,27 +161,27 @@ function findGround(x,y){
 
 function updateChars(dt){
   for(const m of mixers)m.update(dt);
-  for(let i=characters.length-1;i>=0;i--){
-    const c=characters[i],u=c.userData;
+  for(let i=chars.length-1;i>=0;i--){
+    const c=chars[i],u=c.userData;
     u.age+=dt;
     u.vy-=GRAVITY*dt;
     c.position.x+=u.vx*dt;
     c.position.y+=u.vy*dt;
 
     const g=findGround(c.position.x,c.position.y);
-    const s=c.scale.x*5.5;
-    if(c.position.y<g+s*0.7){c.position.y=g+s*0.7;u.vy=0}
+    const fs=c.scale.x*2.8;
+    if(c.position.y<g+fs){c.position.y=g+fs;u.vy=0}
 
-    if(c.position.x<-W/2+80){c.position.x=-W/2+80;u.vx=Math.abs(u.vx)}
-    if(c.position.x>W/2-80){c.position.x=W/2-80;u.vx=-Math.abs(u.vx)}
+    if(c.position.x<-W/2+60){c.position.x=-W/2+60;u.vx=Math.abs(u.vx)}
+    if(c.position.x>W/2-60){c.position.x=W/2-60;u.vx=-Math.abs(u.vx)}
     if(Math.random()<dt*0.08)u.vx=(Math.random()-0.5)*60;
 
     const fade=u.age<2?u.age/2:u.age>u.life-2?Math.max(0,(u.life-u.age)/2):1;
     c.traverse(function(ch){
-      if(ch.material&&ch.material.opacity!==undefined&&!ch.material.emissive)ch.material.opacity=0.8*fade
+      if(ch.material&&ch.material.opacity!==undefined&&!ch.material.emissive)ch.material.opacity=0.85*fade
     });
 
-    if(u.age>u.life){scene.remove(c);characters.splice(i,1)}
+    if(u.age>u.life){scene.remove(c);chars.splice(i,1)}
   }
 }
 
@@ -205,14 +189,8 @@ let _t=0,_ns=0;
 function animate(ts){
   requestAnimationFrame(animate);
   const dt=Math.min((ts-_t)/1000,0.1);_t=ts;
-
   scanTextBlocks();
-
-  if(characters.length<5&&ts>_ns&&baseModel){
-    spawnChar();
-    _ns=ts+2500+Math.random()*3500;
-  }
-
+  if(chars.length<6&&ts>_ns&&baseModel){spawnChar();_ns=ts+2000+Math.random()*3000}
   updateChars(dt);
   renderer.render(scene,camera);
 }
@@ -230,20 +208,6 @@ window.addEventListener('scroll',function(){scrollY=window.scrollY},{passive:tru
 scanTextBlocks();
 requestAnimationFrame(animate);
 
-// Cursor
-const cursor=document.querySelector('.cursor'),ring=document.querySelector('.cursor-ring');
-let mx=0,my=0,rX=0,rY=0;
-document.addEventListener('mousemove',function(e){mx=e.clientX;my=e.clientY});
-(function animCur(){
-  rX+=(mx-rX)*0.15;rY+=(my-rY)*0.15;
-  cursor.style.left=rX+'px';cursor.style.top=rY+'px';
-  ring.style.left=mx+'px';ring.style.top=my+'px';
-  requestAnimationFrame(animCur);
-})();
-document.querySelectorAll('a,button,.cap-item').forEach(function(el){
-  el.addEventListener('mouseenter',function(){ring.classList.add('hover')});
-  el.addEventListener('mouseleave',function(){ring.classList.remove('hover')});
-});
 const hdr=document.getElementById('header');
 window.addEventListener('scroll',function(){hdr.classList.toggle('scrolled',scrollY>30)},{passive:true});
 </script>
