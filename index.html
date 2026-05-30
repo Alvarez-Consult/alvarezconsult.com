@@ -19,35 +19,35 @@ main{position:relative;z-index:3}
 section{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:4rem 2rem}
 .header{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.5rem 2.5rem;display:flex;justify-content:space-between;align-items:center;transition:background 0.5s}
 .header.scrolled{background:rgba(5,5,13,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
-.wordmark{font-size:1rem;font-weight:600;letter-spacing:0.04em;color:#8b5cf6}
+.wordmark{font-size:1rem;font-weight:600;letter-spacing:0.04em;color:#a78bfa}
 .header-cta{font-size:0.8rem;color:#a1a1aa;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.3s}
-.header-cta:hover{color:#8b5cf6}
+.header-cta:hover{color:#a78bfa}
 .hero-content{max-width:780px;text-align:center}
-.hero-sub{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.25em;color:#8b5cf6;margin-bottom:2rem;font-weight:400;animation:fadeIn 1s both}
+.hero-sub{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.25em;color:#a78bfa;margin-bottom:2rem;font-weight:400;animation:fadeIn 1s both}
 .hero-line{overflow:hidden;margin-bottom:0.25rem}
 .hero-line span{display:block;font-size:clamp(2.25rem,8vw,5.5rem);font-weight:300;letter-spacing:-0.03em;line-height:1.05;animation:revealLine 1.2s cubic-bezier(0.22,1,0.36,1) both}
 .hero-line:nth-child(1) span{animation-delay:0.1s}
 .hero-line:nth-child(2) span{animation-delay:0.25s}
 .hero-line:nth-child(3) span{animation-delay:0.4s}
-.hero-line:nth-child(3) span{background:linear-gradient(120deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:600}
+.hero-line:nth-child(3) span{background:linear-gradient(120deg,#a78bfa,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:600}
 @keyframes revealLine{from{transform:translateY(110%)}to{transform:translateY(0)}}
 .hero-divider{width:1px;height:60px;background:linear-gradient(to bottom,transparent,rgba(139,92,246,0.3),transparent);margin:2.5rem auto}
 .hero-whisper{font-size:0.95rem;color:#71717a;max-width:400px;margin:0 auto;line-height:1.7;animation:fadeIn 1s 0.7s both}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .statement{max-width:680px;text-align:center}
 .statement h2{font-size:clamp(1.5rem,4vw,2.5rem);font-weight:300;letter-spacing:-0.02em;line-height:1.35;margin-bottom:2rem}
-.statement h2 em{font-style:normal;color:#8b5cf6;font-weight:600}
+.statement h2 em{font-style:normal;color:#a78bfa;font-weight:600}
 .statement p{color:#71717a;font-size:1rem;line-height:1.8}
 .capabilities{max-width:900px;display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
 .cap-item{padding:3rem 2rem;background:rgba(139,92,246,0.02);border:1px solid rgba(139,92,246,0.06);transition:all 0.5s ease}
 .cap-item:hover{background:rgba(139,92,246,0.06);border-color:rgba(139,92,246,0.15)}
-.cap-index{font-size:0.6rem;color:#8b5cf6;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:1.5rem}
+.cap-index{font-size:0.6rem;color:#a78bfa;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:1.5rem}
 .cap-item h3{font-size:1.05rem;font-weight:400;margin-bottom:0.75rem}
 .cap-item p{font-size:0.8rem;color:#71717a;line-height:1.7}
 .contact-section{text-align:center;max-width:500px}
 .contact-section h2{font-size:2rem;font-weight:300;letter-spacing:-0.02em;margin-bottom:1rem}
 .contact-section p{color:#71717a;font-size:0.95rem;margin-bottom:2.5rem;line-height:1.7}
-.contact-link-main{display:inline-flex;align-items:center;gap:0.75rem;padding:0.9rem 2rem;border:1px solid rgba(139,92,246,0.2);border-radius:2px;color:#8b5cf6;text-decoration:none;font-size:0.85rem;font-weight:400;letter-spacing:0.04em;transition:all 0.4s ease;position:relative;overflow:hidden}
+.contact-link-main{display:inline-flex;align-items:center;gap:0.75rem;padding:0.9rem 2rem;border:1px solid rgba(139,92,246,0.2);border-radius:2px;color:#a78bfa;text-decoration:none;font-size:0.85rem;font-weight:400;letter-spacing:0.04em;transition:all 0.4s ease;position:relative;overflow:hidden}
 .contact-link-main::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(139,92,246,0.08),transparent);transform:translateX(-100%);transition:transform 0.6s ease}
 .contact-link-main:hover::before{transform:translateX(100%)}
 .contact-link-main:hover{border-color:rgba(139,92,246,0.5);box-shadow:0 0 30px rgba(139,92,246,0.1)}
@@ -88,77 +88,79 @@ scene.add(new THREE.AmbientLight(0xaabbcc,3));
 scene.add(new THREE.DirectionalLight(0xffffff,3)).position.set(0.5,0.4,1);
 scene.add(new THREE.DirectionalLight(0x8888ff,2)).position.set(-0.5,0,0.5);
 
-// Load gradient map for toon shading
-const texLoader=new THREE.TextureLoader();
-const gradientMap=texLoader.load('models/toon_gradient.png');
+// Create gradient map via canvas (no HTTP request)
+const gradCanvas=document.createElement('canvas');
+gradCanvas.width=4;gradCanvas.height=1;
+const gctx=gradCanvas.getContext('2d');
+const gradG=gctx.createLinearGradient(0,0,4,0);
+gradG.addColorStop(0,'#333333');
+gradG.addColorStop(0.33,'#777777');
+gradG.addColorStop(0.66,'#bbbbbb');
+gradG.addColorStop(1,'#ffffff');
+gctx.fillStyle=gradG;gctx.fillRect(0,0,4,1);
+const gradientMap=new THREE.CanvasTexture(gradCanvas);
 gradientMap.minFilter=THREE.NearestFilter;
 gradientMap.magFilter=THREE.NearestFilter;
 
-function toonMat(colorHex){
-  return new THREE.MeshToonMaterial({
-    color:colorHex,
-    gradientMap:gradientMap,
-    transparent:true,
-    opacity:0.9
-  });
+function makeToonMat(hex){
+  return new THREE.MeshToonMaterial({color:hex,gradientMap:gradientMap,transparent:true,opacity:0.9});
 }
 
-// Text blocks with outline
+// Text blocks
 const textBlocks=[];
 function scanTextBlocks(){
   while(textBlocks.length){const b=textBlocks.pop();scene.remove(b.mesh);b.mesh.geometry.dispose();b.mesh.material.dispose()}
-  document.querySelectorAll('[data-3d]').forEach(el=>{
+  document.querySelectorAll('[data-3d]').forEach(function(el){
     const r=el.getBoundingClientRect();
     if(r.bottom<-100||r.top>H+100)return;
-    const geo=new THREE.BoxGeometry(r.width+24,r.height+14,45);
-    const mat=toonMat(0x2a2a4a);
-    mat.opacity=0.25;
-    const mesh=new THREE.Mesh(geo,mat);
+    const mesh=new THREE.Mesh(
+      new THREE.BoxGeometry(r.width+24,r.height+14,45),
+      makeToonMat(0x2a2a4a)
+    );
+    mesh.material.opacity=0.25;
     mesh.position.set(r.left+r.width/2-W/2,H/2-(r.top+r.height/2),-5);
     scene.add(mesh);
     textBlocks.push({mesh,cx:r.left+r.width/2-W/2,cy:H/2-(r.top+r.height/2),w:r.width,h:r.height});
   });
 }
 
-// Convert all sub-meshes to toon
-function toonifyAll(obj,colorHex){
+// Toonify helper
+function toonify(obj,hex){
   obj.traverse(function(child){
-    if(child.isMesh&&child.material){
-      const c=colorHex||(child.material.color?child.material.color.getHex():0xcccccc);
-      const arrays=Array.isArray(child.material)?child.material:[child.material];
-      const newMats=arrays.map(function(m){
-        return toonMat(c);
-      });
-      child.material=Array.isArray(child.material)?newMats:newMats[0];
+    if(!child.isMesh)return;
+    const materials=Array.isArray(child.material)?child.material:[child.material];
+    const result=[];
+    for(let i=0;i<materials.length;i++){
+      const m=materials[i];
+      const color=m.color?m.color.getHex():hex||0xcccccc;
+      const tm=makeToonMat(color);
+      result.push(tm);
     }
+    child.material=Array.isArray(child.material)?result:result[0];
   });
 }
 
 const loader=new GLTFLoader();
-let humanM=null,humanA=null;
-let foxM=null,foxA=null;
+let humanM=null,humanA=null,foxM=null,foxA=null;
 const chars=[],mixers=[];
 const GRAVITY=600;
 let scrollY=0;
 
-// Pastel cartoon colors
-const CARTOON_COLORS=[0xff9999,0x99ccff,0x99ff99,0xffff99,0xff99ff,0x99ffff];
+const COLORS=[0xff8888,0x88bbff,0x88dd88,0xffff88,0xff88ff,0x88ddff,0xffaa66,0xcc88ff];
 
 loader.load('models/human.glb',function(gltf){
   humanM=gltf.scene;humanA=gltf.animations;
-  console.log('Human OK');
-  spawnChar('human');spawnChar('human');spawnChar('human');
+  for(let i=0;i<3;i++)spawn('human');
 });
 
 const FOX_URL='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/Fox/glTF-Binary/Fox.glb';
 loader.load(FOX_URL,function(gltf){
   foxM=gltf.scene;foxA=gltf.animations;
-  console.log('Fox OK');
-  spawnChar('fox');spawnChar('fox');
+  for(let i=0;i<2;i++)spawn('fox');
 });
 
-function spawnChar(type){
-  const fox=type==='fox';
+function spawn(type){
+  const fox=(type==='fox');
   if(fox&&!foxM)return;if(!fox&&!humanM)return;
   const src=fox?foxM:humanM;
   const anims=fox?foxA:humanA;
@@ -168,19 +170,16 @@ function spawnChar(type){
   const h=box.max.y-box.min.y;
   clone.scale.setScalar(H*0.2/h);
 
-  const colorIdx=Math.floor(Math.random()*CARTOON_COLORS.length);
-  toonifyAll(clone,CARTOON_COLORS[colorIdx]);
+  const col=COLORS[Math.floor(Math.random()*COLORS.length)];
+  toonify(clone,col);
 
   clone.position.set((Math.random()-0.5)*W*0.55,(Math.random()-0.5)*H*0.55,0);
   clone.rotation.set(0,Math.random()*Math.PI*2,0);
 
   const mixer=new THREE.AnimationMixer(clone);
-  if(anims&&anims.length){
-    const idx=anims.length>2?1:0;
-    mixer.clipAction(anims[idx]).play();
-  }
+  if(anims&&anims.length)mixer.clipAction(anims[Math.min(1,anims.length-1)]).play();
   mixers.push(mixer);
-  clone.userData={vx:(Math.random()-0.5)*40,vy:0,age:0,life:25+Math.random()*15,t:type};
+  clone.userData={vx:(Math.random()-0.5)*40,vy:0,age:0,life:25+Math.random()*15};
   scene.add(clone);
   chars.push(clone);
 }
@@ -196,7 +195,7 @@ function findGround(x,y){
 }
 
 function updateChars(dt){
-  for(const m of mixers)m.update(dt);
+  for(let i=0;i<mixers.length;i++)mixers[i].update(dt);
   for(let i=chars.length-1;i>=0;i--){
     const c=chars[i],u=c.userData;
     u.age+=dt;u.vy-=GRAVITY*dt;
@@ -219,7 +218,7 @@ function animate(ts){
   const dt=Math.min((ts-_t)/1000,0.1);_t=ts;
   scanTextBlocks();
   if(chars.length<6&&ts>_ns&&(humanM||foxM)){
-    spawnChar(Math.random()<0.4&&foxM?'fox':'human');
+    spawn(Math.random()<0.4&&foxM?'fox':'human');
     _ns=ts+2000+Math.random()*3000;
   }
   updateChars(dt);
