@@ -77,81 +77,101 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
 
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(50,window.innerWidth/window.innerHeight,0.1,100);
-camera.position.set(0,3,12);
-camera.lookAt(0,0,0);
+camera.position.set(0,4,10);
+camera.lookAt(0,2,0);
 
 scene.add(new THREE.AmbientLight(0xffffff,3));
-const sun=new THREE.DirectionalLight(0xffffff,5);sun.position.set(2,6,4);scene.add(sun);
+scene.add(new THREE.DirectionalLight(0xffffff,5)).position.set(2,6,4);
 
-// Ground
-scene.add(new THREE.Mesh(
+// Ground (semi-transparent)
+const ground=new THREE.Mesh(
   new THREE.PlaneGeometry(30,30),
-  new THREE.MeshStandardMaterial({color:0x1a1a2e,roughness:0.9})
-)).rotation.x=-Math.PI/2;
-
-// REFERENCE CUBE - bright pink, impossible to miss
-const cube=new THREE.Mesh(
-  new THREE.BoxGeometry(2,2,2),
-  new THREE.MeshStandardMaterial({color:0xff00ff,emissive:0xff00ff,emissiveIntensity:0.8})
+  new THREE.MeshStandardMaterial({color:0x1a1a2e,roughness:0.9,transparent:true,opacity:0.5})
 );
-cube.position.set(5,1,0);
-scene.add(cube);
+ground.rotation.x=-Math.PI/2;ground.position.y=-0.01;
+scene.add(ground);
 
-// Load model ONCE, no cloning
-new GLTFLoader().load('models/human.glb',function(gltf){
-  const model=gltf.scene;
-  
-  // Debug: make all materials bright pink
-  model.traverse(function(c){
-    if(c.isMesh){
-      console.log('Mesh found:',c.name,c.material);
-      const mats=Array.isArray(c.material)?c.material:[c.material];
-      for(let i=0;i<mats.length;i++){
-        mats[i].color=new THREE.Color(0x00ffff); // cyan
-        mats[i].emissive=new THREE.Color(0x004444);
-        mats[i].emissiveIntensity=0.5;
-        mats[i].needsUpdate=true;
+// Grid
+const grid=new THREE.GridHelper(20,20,0x333366,0x1a1a33);
+grid.position.y=0;scene.add(grid);
+
+// Multiple character instances - each loaded separately
+const mixerList=[],modelList=[];
+const COLORS=[0xff5588,0x55aaff,0x55dd55,0xffdd44,0xff55ff,0x55ddff];
+
+function loadAndSpawn(index){
+  new GLTFLoader().load('models/human.glb',function(gltf){
+    const model=gltf.scene;
+
+    // Set color
+    const col=new THREE.Color(COLORS[index%COLORS.length]);
+    model.traverse(function(c){
+      if(c.isMesh&&c.material){
+        const mats=Array.isArray(c.material)?c.material:[c.material];
+        for(let i=0;i<mats.length;i++){
+          mats[i].color=col;
+          mats[i].emissive=col.clone().multiplyScalar(0.3);
+          mats[i].emissiveIntensity=0.4;
+          mats[i].needsUpdate=true;
+        }
       }
-    }
-  });
+    });
 
-  // Compute bounding box
-  const box=new THREE.Box3().setFromObject(model);
-  const size=box.getSize(new THREE.Vector3());
-  console.log('Model size:',size.toArray(),'center:',box.getCenter(new THREE.Vector3()).toArray());
+    // Scale
+    const box=new THREE.Box3().setFromObject(model);
+    const h=box.max.y-box.min.y;
+    model.scale.setScalar(3.5/h);
 
-  // Scale to 4 units tall
-  const scale=4/size.y;
-  model.scale.setScalar(scale);
-  console.log('Scale:',scale);
+    // Position above ground, spread out
+    model.position.set(
+      (index-2)*3,
+      2,
+      (index-2)*1.5
+    );
+    model.rotation.set(0,index*0.8,0);
 
-  // Position at center
-  model.position.set(0,0,0);
-  scene.add(model);
+    scene.add(model);
+    modelList.push(model);
 
-  // Animation
-  if(gltf.animations.length){
+    // Animate
     const mixer=new THREE.AnimationMixer(model);
-    mixer.clipAction(gltf.animations[1]||gltf.animations[0]).play();
-    const clock=new THREE.Clock();
-    function anim(){
-      requestAnimationFrame(anim);
-      const dt=Math.min(clock.getDelta(),0.1);
-      mixer.update(dt);
-      cube.rotation.y+=dt;
-      cube.position.y=1+Math.sin(Date.now()*0.003)*0.5;
-      renderer.render(scene,camera);
-    }
-    anim();
-    console.log('Animation started');
-  }
-},function(xhr){
-  if(xhr.total)console.log('Load:',Math.round(xhr.loaded/xhr.total*100)+'%');
-},function(err){
-  console.error('Error:',err);
-});
+    if(gltf.animations.length)mixer.clipAction(gltf.animations[1]||gltf.animations[0]).play();
+    mixerList.push(mixer);
 
-console.log('Init complete');
+    console.log('Spawned char',index);
+  });
+}
+
+// Load 6 separate instances
+for(let i=0;i<6;i++)loadAndSpawn(i);
+
+const clock=new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),0.1);
+
+  for(let i=0;i<mixerList.length;i++)mixerList[i].update(dt);
+
+  // Move characters
+  for(let i=0;i<modelList.length;i++){
+    const m=modelList[i];
+    m.position.x+=Math.sin(Date.now()*0.001+i)*0.02;
+    m.position.z+=Math.cos(Date.now()*0.001+i)*0.02;
+    m.rotation.y+=dt*0.3;
+    m.position.y=2+Math.sin(Date.now()*0.002+i)*0.3;
+  }
+
+  camera.position.x=Math.sin(Date.now()*0.0002)*4;
+  camera.lookAt(0,2,0);
+  renderer.render(scene,camera);
+}
+requestAnimationFrame(animate);
+
+window.addEventListener('resize',function(){
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+});
 </script>
 </body>
 </html>
