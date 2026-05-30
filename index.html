@@ -1,122 +1,88 @@
-<!DOCTYPE html><html><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Alvarez-Consult</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600&display=swap');
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',system-ui,sans-serif;background:#05050d;color:#e4e4ec;font-weight:300;overflow:hidden}
-#c{display:block}
-#ui{position:fixed;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;pointer-events:none}
-#ui h1{font-size:clamp(2rem,6vw,4.5rem);font-weight:300;text-align:center;letter-spacing:-0.03em;line-height:1.1;text-shadow:0 0 80px rgba(5,5,13,0.95)}
-#ui .g{background:linear-gradient(120deg,#a78bfa,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-#ui .sub{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.25em;color:#a78bfa;margin-bottom:1.5rem}
-#ui .w{font-size:0.95rem;color:#71717a;margin-top:1.5rem}
-#nav{position:fixed;top:0;left:0;right:0;z-index:3;padding:1.5rem 2.5rem;display:flex;justify-content:space-between;align-items:center}
-#nav .logo{font-size:1rem;font-weight:600;color:#a78bfa}
-#nav a{font-size:0.8rem;color:#a1a1aa;text-decoration:none;text-transform:uppercase;letter-spacing:0.06em;transition:color 0.3s}
-#nav a:hover{color:#a78bfa}
-#ft{position:fixed;bottom:0;left:0;right:0;z-index:3;padding:1.5rem 2.5rem;display:flex;justify-content:space-between;font-size:0.7rem;color:#52525b}
-</style>
-</head><body>
-<canvas id="c"></canvas>
-<div id="nav"><span class="logo">AlvarezConsult</span><a href="mailto:hello@alvarezconsult.com">Contact</a></div>
-<div id="ui"><div>
-  <div class="sub">Custom AI Solutions</div>
-  <h1>We build<br><span class="g">intelligence</span><br>into systems.</h1>
-  <p class="w">Tailored AI that knows your business.</p>
-</div></div>
-<div id="ft"><span>© 2026 Alvarez-Consult</span><span>Sevilla · Madrid</span></div>
-
+<!DOCTYPE html><html><body style="margin:0;background:#111">
+<canvas id="c" style="display:block"></canvas>
+<div id="log" style="position:fixed;top:10px;left:10px;color:#0f0;font:14px monospace;z-index:9">...</div>
 <script type="importmap">
 {"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
 </script>
 <script type="module">
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const L=document.getElementById('log');
 
-const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),alpha:true,antialias:true});
-renderer.setSize(window.innerWidth,window.innerHeight);
-
+const r=new THREE.WebGLRenderer({canvas:document.getElementById('c'),alpha:true});
+r.setSize(window.innerWidth,window.innerHeight);
 const scene=new THREE.Scene();
-const camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,100);
-camera.position.set(0,0,10);
+const cam=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,100);
+cam.position.set(0,0,10);cam.lookAt(0,0,0);
 
-scene.add(new THREE.AmbientLight(0xffffff,2));
-scene.add(new THREE.DirectionalLight(0xffffff,2)).position.set(1,1,1);
+scene.add(new THREE.AmbientLight(0xffffff,3));
+scene.add(new THREE.DirectionalLight(0xffffff,3)).position.set(1,1,1);
 
-// Reference pink cube
+// Pink cube - user confirms seeing this
 const cube=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),new THREE.MeshStandardMaterial({color:0xff00ff}));
-cube.position.set(-5,0,0);
+cube.position.set(-3,0,0);
 scene.add(cube);
 
-// Load and spawn characters one by one
-let loadedCount=0;
-const chars=[],mixers=[];
+// Green sphere - another reference
+const sphere=new THREE.Mesh(new THREE.SphereGeometry(1,16,16),new THREE.MeshStandardMaterial({color:0x00ff00,emissive:0x003300}));
+sphere.position.set(3,0,0);
+scene.add(sphere);
 
-function loadOne(index){
-  new GLTFLoader().load('models/human.glb',function(gltf){
-    const model=gltf.scene;
-    const colors=[0xff5588,0x55aaff,0x55dd55,0xffee44,0xff88ff,0x88ffff];
-    const col=new THREE.Color(colors[index]);
+L.textContent='Loading model...';
 
-    model.traverse(function(c){
-      if(c.isMesh&&c.material){
+new GLTFLoader().load('models/human.glb',function(gltf){
+  const model=gltf.scene;
+  L.textContent='Model loaded. Meshes:';
+
+  // Print all meshes
+  model.traverse(function(c){
+    if(c.isMesh){
+      L.textContent+=' '+c.type;
+      // Force material
+      if(c.material){
         const mats=Array.isArray(c.material)?c.material:[c.material];
         for(let j=0;j<mats.length;j++){
-          mats[j].color=col;
-          mats[j].emissive=col.clone().multiplyScalar(0.3);
+          mats[j].color=new THREE.Color(0xff8800);
+          mats[j].emissive=new THREE.Color(0xff4400);
+          mats[j].emissiveIntensity=1;
+          mats[j].wireframe=false;
+          mats[j].transparent=false;
+          mats[j].opacity=1;
           mats[j].needsUpdate=true;
         }
       }
-    });
-
-    const box=new THREE.Box3().setFromObject(model);
-    const h=box.max.y-box.min.y;
-    model.scale.setScalar(4/h);
-
-    const angle=(index/6)*Math.PI*2;
-    model.position.set(Math.cos(angle)*5,-1.5,Math.sin(angle)*4-2);
-    model.rotation.set(0,angle+Math.PI/2,0);
-    scene.add(model);
-
-    const mixer=new THREE.AnimationMixer(model);
-    if(gltf.animations.length)mixer.clipAction(gltf.animations[0]).play();
-    mixers.push(mixer);
-    chars.push(model);
-    loadedCount++;
-    console.log('Char',index,'loaded. Total:',loadedCount);
+    }
   });
-}
 
-// Load 6 characters sequentially with delays to avoid concurrent loading issues
-function loadAll(){
-  loadOne(0);
-  setTimeout(function(){loadOne(1)},500);
-  setTimeout(function(){loadOne(2)},1000);
-  setTimeout(function(){loadOne(3)},1500);
-  setTimeout(function(){loadOne(4)},2000);
-  setTimeout(function(){loadOne(5)},2500);
-}
-loadAll();
+  const box=new THREE.Box3().setFromObject(model);
+  const h=box.max.y-box.min.y;
+  model.scale.setScalar(4/h);
+  // Put model at origin (0,0,0) - between cube and sphere
+  model.position.set(0,0,0);
+  scene.add(model);
 
-const clock=new THREE.Clock();
-function animate(){
-  requestAnimationFrame(animate);
-  const dt=Math.min(clock.getDelta(),0.1);
-  cube.rotation.y+=dt*0.5;cube.rotation.x+=dt*0.3;
-  for(let i=0;i<mixers.length;i++)mixers[i].update(dt);
-  for(let i=0;i<chars.length;i++){
-    chars[i].rotation.y+=dt*0.15;
-    chars[i].position.y=-1.5+Math.sin(Date.now()*0.002+i)*0.25;
+  L.textContent+=' | Scale:'+model.scale.x.toFixed(2)+' H:'+h.toFixed(1);
+
+  // Anim
+  if(gltf.animations.length){
+    const mixer=new THREE.AnimationMixer(model);
+    mixer.clipAction(gltf.animations[0]).play();
+    const clock=new THREE.Clock();
+    function anim(){
+      requestAnimationFrame(anim);
+      const dt=Math.min(clock.getDelta(),0.1);
+      mixer.update(dt);
+      cube.rotation.y+=dt*0.5;
+      sphere.position.y=Math.sin(Date.now()*0.003)*0.5;
+      r.render(scene,cam);
+    }
+    anim();
+    L.textContent+=' | Animating';
   }
-  renderer.render(scene,camera);
-}
-requestAnimationFrame(animate);
-
-window.addEventListener('resize',function(){
-  renderer.setSize(window.innerWidth,window.innerHeight);
-  camera.aspect=window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
+},function(xhr){
+  if(xhr.total)L.textContent='Loading: '+Math.round(xhr.loaded/xhr.total*100)+'%';
+},function(err){
+  L.textContent='ERROR: '+err.message;
 });
 </script>
 </body></html>
