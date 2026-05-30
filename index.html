@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Alvarez-Consult</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600&display=swap');
@@ -73,80 +72,90 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('sim'),alpha:true,antialias:true});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
 renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.shadowMap.enabled=true;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
 
 const scene=new THREE.Scene();
-const camera=new THREE.PerspectiveCamera(50,window.innerWidth/window.innerHeight,0.5,500);
-camera.position.set(0,2,16);
+const camera=new THREE.PerspectiveCamera(55,window.innerWidth/window.innerHeight,0.5,200);
+camera.position.set(0,3,14);
 camera.lookAt(0,0,0);
 
-// Bright environment
-scene.add(new THREE.AmbientLight(0xffffff,2));
-const sun=new THREE.DirectionalLight(0xffffff,4);
-sun.position.set(3,8,5);
-sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);
-scene.add(sun);
-scene.add(new THREE.DirectionalLight(0x8888ff,1.5)).position.set(-2,2,-3);
+// Bright lights
+scene.add(new THREE.AmbientLight(0xffffff,3));
+const sun=new THREE.DirectionalLight(0xffffff,6);sun.position.set(2,6,4);scene.add(sun);
+scene.add(new THREE.DirectionalLight(0x8888ff,2)).position.set(-2,1,-2);
 
 // Ground
-const ground=new THREE.Mesh(
-  new THREE.PlaneGeometry(40,40),
-  new THREE.MeshStandardMaterial({color:0x111122,roughness:0.9,metalness:0.1})
-);
-ground.rotation.x=-Math.PI/2;ground.position.y=-5;
-ground.receiveShadow=true;
+const groundGeo=new THREE.PlaneGeometry(40,40);
+const groundMat=new THREE.MeshStandardMaterial({color:0x221133,roughness:0.85,metalness:0.05});
+const ground=new THREE.Mesh(groundGeo,groundMat);
+ground.rotation.x=-Math.PI/2;ground.position.y=-4.5;
 scene.add(ground);
 
-// Grid on ground
-const gridHelper=new THREE.PolarGridHelper(18,32,24,64,0x222244,0x222244);
-gridHelper.position.y=-4.99;scene.add(gridHelper);
+// Grid ring
+const ringGeo=new THREE.TorusGeometry(8,0.05,8,64);
+const ringMat=new THREE.MeshBasicMaterial({color:0x8b5cf6,transparent:true,opacity:0.3});
+const ring=new THREE.Mesh(ringGeo,ringMat);ring.rotation.x=Math.PI/2;ring.position.y=-4.48;scene.add(ring);
 
 const chars=[],mixers=[];
-const loader=new GLTFLoader();
-const COLORS=[0xff6688,0x66aaff,0x66dd66,0xffee44,0xff66ff,0x66ddff,0xff8844,0xbb66ff];
 let humanM=null,humanA=null;
 
-loader.load('models/human.glb',function(gltf){
+new GLTFLoader().load('models/human.glb',function(gltf){
   humanM=gltf.scene;humanA=gltf.animations;
+  console.log('Model loaded');
+
+  // Force-emissive all materials for max visibility
+  humanM.traverse(function(c){
+    if(c.isMesh&&c.material){
+      const mats=Array.isArray(c.material)?c.material:[c.material];
+      for(let i=0;i<mats.length;i++){
+        mats[i].emissive=mats[i].color?mats[i].color.clone():new THREE.Color(0x444444);
+        mats[i].emissiveIntensity=0.5;
+      }
+    }
+  });
+
   for(let i=0;i<5;i++)spawn();
 });
+
+const COLORS=[0xff5588,0x55aaff,0x55dd55,0xffdd44,0xff55ff,0x55ddff,0xff8844,0xbb55ff];
 
 function spawn(){
   if(!humanM)return;
   const clone=humanM.clone(true);
   const box=new THREE.Box3().setFromObject(clone);
   const h=box.max.y-box.min.y;
-  clone.scale.setScalar(3.5/h);
 
-  // Random color
+  // Scale to 4 units tall
+  clone.scale.setScalar(4/h);
+
+  // Override colors for visibility
   const col=COLORS[Math.floor(Math.random()*COLORS.length)];
   clone.traverse(function(c){
     if(c.isMesh&&c.material){
       const mats=Array.isArray(c.material)?c.material:[c.material];
       for(let i=0;i<mats.length;i++){
-        const m=mats[i];
-        if(m.color)m.color.setHex(col);
-        m.transparent=true;m.opacity=0.85;
-        m.castShadow=true;m.receiveShadow=true;
+        mats[i].color=new THREE.Color(col);
+        mats[i].emissive=new THREE.Color(col);
+        mats[i].emissiveIntensity=0.4;
+        mats[i].transparent=true;mats[i].opacity=0.9;
+        mats[i].needsUpdate=true;
       }
     }
   });
 
-  clone.position.set((Math.random()-0.5)*12,0,(Math.random()-0.5)*10);
+  clone.position.set((Math.random()-0.5)*10,0,(Math.random()-0.5)*8);
   clone.rotation.set(0,Math.random()*Math.PI*2,0);
 
   const mixer=new THREE.AnimationMixer(clone);
   if(humanA&&humanA.length)mixer.clipAction(humanA[Math.min(1,humanA.length-1)]).play();
   mixers.push(mixer);
-  clone.userData={vx:(Math.random()-0.5)*3,vz:(Math.random()-0.5)*3,age:0,life:20+Math.random()*15};
+  clone.userData={vx:(Math.random()-0.5)*2.5,vz:(Math.random()-0.5)*2.5,age:0,life:25+Math.random()*15};
   scene.add(clone);
   chars.push(clone);
 }
 
 const clock=new THREE.Clock();
-
 function animate(){
   requestAnimationFrame(animate);
   const dt=Math.min(clock.getDelta(),0.1);
@@ -156,39 +165,34 @@ function animate(){
   for(let i=chars.length-1;i>=0;i--){
     const c=chars[i],u=c.userData;
     u.age+=dt;
-    c.position.x+=u.vx*dt;
-    c.position.z+=u.vz*dt;
-    c.rotation.y+=dt*0.2;
+    c.position.x+=u.vx*dt;c.position.z+=u.vz*dt;
+    c.rotation.y+=dt*0.15;
 
-    // Bounce at boundaries
-    if(Math.abs(c.position.x)>15){u.vx*=-1;c.position.x=Math.sign(c.position.x)*15}
-    if(Math.abs(c.position.z)>12){u.vz*=-1;c.position.z=Math.sign(c.position.z)*12}
-    if(Math.random()<dt*0.1){u.vx=(Math.random()-0.5)*4;u.vz=(Math.random()-0.5)*4}
+    if(Math.abs(c.position.x)>12){u.vx*=-1}
+    if(Math.abs(c.position.z)>10){u.vz*=-1}
+    if(Math.random()<dt*0.08){u.vx=(Math.random()-0.5)*3;u.vz=(Math.random()-0.5)*3}
 
-    c.position.y=-5+Math.abs(Math.sin(u.age*3))*0.15;
+    c.position.y=-4.5+Math.abs(Math.sin(u.age*3))*0.12;
 
     const fade=u.age<1?u.age:u.age>u.life-2?Math.max(0,(u.life-u.age)/2):1;
-    c.traverse(function(ch){if(ch.material&&ch.material.opacity!==undefined)ch.material.opacity=0.85*fade});
+    c.traverse(function(ch){if(ch.material&&ch.material.opacity!==undefined)ch.material.opacity=0.9*fade});
 
     if(u.age>u.life){scene.remove(c);chars.splice(i,1)}
   }
 
   if(chars.length<7&&humanM)spawn();
 
-  // Gentle camera sway
-  camera.position.x=Math.sin(Date.now()*0.0001)*2;
+  camera.position.x=Math.sin(Date.now()*0.00015)*3;
   camera.lookAt(0,-1,0);
-
   renderer.render(scene,camera);
 }
+requestAnimationFrame(animate);
 
 window.addEventListener('resize',function(){
   renderer.setSize(window.innerWidth,window.innerHeight);
   camera.aspect=window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
 });
-
-requestAnimationFrame(animate);
 </script>
 </body>
 </html>
