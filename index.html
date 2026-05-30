@@ -12,11 +12,12 @@ html{scroll-behavior:smooth;scrollbar-width:none}
 html::-webkit-scrollbar{display:none}
 body{font-family:'Inter',system-ui,sans-serif;background:#05050d;color:#e4e4ec;font-weight:300;line-height:1.5;-webkit-font-smoothing:antialiased;cursor:none;overflow-x:hidden}
 ::selection{background:rgba(139,92,246,0.3);color:#fff}
+
 .cursor{position:fixed;width:8px;height:8px;border-radius:50%;background:#8b5cf6;pointer-events:none;z-index:9999;mix-blend-mode:exclusion;transition:transform 0.15s;transform:translate(-50%,-50%)}
 .cursor-ring{position:fixed;width:36px;height:36px;border-radius:50%;border:1px solid rgba(139,92,246,0.3);pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:transform 0.3s cubic-bezier(0.22,1,0.36,1),width 0.3s,height 0.3s,border-color 0.3s}
 .cursor-ring.hover{width:56px;height:56px;border-color:rgba(139,92,246,0.6)}
 
-#sim{position:fixed;inset:0;z-index:1;display:block;background:transparent}
+#sim{position:fixed;inset:0;z-index:1}
 
 .bg-grid{position:fixed;inset:0;z-index:0;opacity:0.025;background-image:linear-gradient(rgba(139,92,246,0.2) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,0.2) 1px,transparent 1px);background-size:80px 80px}
 .grain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");background-size:256px 256px}
@@ -76,7 +77,6 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 <div class="grain"></div>
 <div class="ambient ambient-1"></div>
 <div class="ambient ambient-2"></div>
-
 <canvas id="sim"></canvas>
 
 <header class="header" id="header">
@@ -94,7 +94,7 @@ section{min-height:100vh;display:flex;align-items:center;justify-content:center;
 <footer class="footer"><span>© 2026 Alvarez-Consult</span><span>Sevilla · Madrid</span></footer>
 
 <script type="importmap">
-{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}
+{"imports":{"three":"https://unpkg.com/three@0.170.0/build/three.module.js"}}
 </script>
 <script type="module">
 import * as THREE from 'three';
@@ -102,165 +102,152 @@ import * as THREE from 'three';
 const canvas=document.getElementById('sim');
 const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-renderer.setSize(window.innerWidth,window.innerHeight);
+
+let W=window.innerWidth, H=window.innerHeight;
+renderer.setSize(W,H);
 
 const scene=new THREE.Scene();
-const camera=new THREE.OrthographicCamera(-window.innerWidth/2,window.innerWidth/2,window.innerHeight/2,-window.innerHeight/2,0.1,100);
-camera.position.z=10;
+const camera=new THREE.OrthographicCamera(-W/2,W/2,H/2,-H/2,1,1000);
+camera.position.z=50;
 
-// Lighting
-const ambient=new THREE.AmbientLight(0x222244,1.5);
+const ambient=new THREE.AmbientLight(0x334466,2);
 scene.add(ambient);
-const dir=new THREE.DirectionalLight(0x8b5cf6,0.8);
-dir.position.set(1,1,2);
-scene.add(dir);
+const light1=new THREE.DirectionalLight(0x8b5cf6,2);light1.position.set(1,0.5,1);scene.add(light1);
+const light2=new THREE.DirectionalLight(0x06b6d4,1);light2.position.set(-1,0.3,0.5);scene.add(light2);
 
 const scenes=[];
 
-function makeRobot(color){
-  const group=new THREE.Group();
-  const mat=new THREE.MeshStandardMaterial({color,metalness:0.3,roughness:0.6});
-  const dark=new THREE.MeshStandardMaterial({color:0x111122,metalness:0.5,roughness:0.5});
-  const eye=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:0.8});
+function makeRobot(colorHex){
+  const g=new THREE.Group();
+  const body=new THREE.MeshStandardMaterial({color:colorHex,metalness:0.4,roughness:0.5});
+  const dark=new THREE.MeshStandardMaterial({color:0x1a1a30,metalness:0.6,roughness:0.4});
+  const glow=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:1.2});
 
-  // Body
-  const body=new THREE.Mesh(new THREE.BoxGeometry(0.25,0.35,0.18),mat);body.position.y=0.15;group.add(body);
-  // Head
-  const head=new THREE.Mesh(new THREE.SphereGeometry(0.14,16,16),mat);head.position.y=0.42;group.add(head);
-  // Eyes
-  const le=new THREE.Mesh(new THREE.SphereGeometry(0.03,8,8),eye);le.position.set(-0.05,0.44,0.12);group.add(le);
-  const re=new THREE.Mesh(new THREE.SphereGeometry(0.03,8,8),eye);re.position.set(0.05,0.44,0.12);group.add(re);
+  // Feet
+  const lf=new THREE.Mesh(new THREE.BoxGeometry(8,4,12),dark);lf.position.set(-6,-32,0);g.add(lf);
+  const rf=new THREE.Mesh(new THREE.BoxGeometry(8,4,12),dark);rf.position.set(6,-32,0);g.add(rf);
   // Legs
-  const ll=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.25,8),dark);ll.position.set(-0.06,-0.1,0);group.add(ll);
-  const rl=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.25,8),dark);rl.position.set(0.06,-0.1,0);group.add(rl);
+  const ll=new THREE.Mesh(new THREE.BoxGeometry(5,24,5),dark);ll.position.set(-6,-18,0);g.add(ll);
+  const rl=new THREE.Mesh(new THREE.BoxGeometry(5,24,5),dark);rl.position.set(6,-18,0);g.add(rl);
+  // Body
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(20,28,14),body));
+  // Shoulders
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(24,6,10),dark));
   // Arms
-  const la=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.2,8),dark);la.position.set(-0.16,0.2,0);la.rotation.z=0.4;group.add(la);
-  const ra=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.2,8),dark);ra.position.set(0.16,0.2,0);ra.rotation.z=-0.4;group.add(ra);
+  const la=new THREE.Mesh(new THREE.BoxGeometry(5,22,5),dark);la.position.set(-14,-4,0);g.add(la);
+  const ra=new THREE.Mesh(new THREE.BoxGeometry(5,22,5),dark);ra.position.set(14,-4,0);g.add(ra);
+  // Head
+  const head=new THREE.Mesh(new THREE.SphereGeometry(10,24,24),body);head.position.y=22;g.add(head);
+  // Eyes
+  const le=new THREE.Mesh(new THREE.SphereGeometry(2.5,12,12),glow);le.position.set(-4,23,8);g.add(le);
+  const re=new THREE.Mesh(new THREE.SphereGeometry(2.5,12,12),glow);re.position.set(4,23,8);g.add(re);
   // Antenna
-  const ant=new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,0.1,8),dark);ant.position.y=0.58;group.add(ant);
-  const tip=new THREE.Mesh(new THREE.SphereGeometry(0.025,8,8),eye);tip.position.y=0.64;group.add(tip);
+  g.add(new THREE.Mesh(new THREE.CylinderGeometry(1,1,8,8),dark));
+  const tip=new THREE.Mesh(new THREE.SphereGeometry(2.5,8,8),glow);tip.position.y=8;g.add(tip);
+  // Neck ring
+  g.add(new THREE.Mesh(new THREE.TorusGeometry(6,1.5,8,16),dark));
 
-  group.userData={body,head,ll,rl,la,ra,legPhase:Math.random()*Math.PI*2};
-  return group;
+  g.userData={ll,rl,la,ra,phase:Math.random()*Math.PI*2};
+  return g;
 }
 
 function makePlatform(w,h){
-  const group=new THREE.Group();
-  const mat=new THREE.MeshStandardMaterial({color:0x1a1a30,metalness:0.1,roughness:0.8,transparent:true,opacity:0.5});
-  const edge=new THREE.MeshStandardMaterial({color:0x333355,metalness:0.2,roughness:0.5,transparent:true,opacity:0.5});
+  const g=new THREE.Group();
+  const mat=new THREE.MeshStandardMaterial({color:0x1a1a35,metalness:0.1,roughness:0.9,transparent:true,opacity:0.55});
+  const border=new THREE.MeshStandardMaterial({color:0x2a2a55,metalness:0.3,roughness:0.6,transparent:true,opacity:0.55});
   // Floor
-  const floor=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);
-  floor.rotation.x=-Math.PI/2;
-  group.add(floor);
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);floor.rotation.x=-Math.PI/2;floor.position.y=-0.5;g.add(floor);
+  // Border frame
+  const bw=3;
+  const top=new THREE.Mesh(new THREE.BoxGeometry(w+bw*2,bw,bw),border);top.position.z=h/2;g.add(top);
+  const bot=new THREE.Mesh(new THREE.BoxGeometry(w+bw*2,bw,bw),border);bot.position.z=-h/2;g.add(bot);
+  const left=new THREE.Mesh(new THREE.BoxGeometry(bw,bw,h),border);left.position.x=-w/2;g.add(left);
+  const right=new THREE.Mesh(new THREE.BoxGeometry(bw,bw,h),border);right.position.x=w/2;g.add(right);
   // Grid lines
-  for(let i=-w/2+0.2;i<w/2;i+=0.6){
-    const l=new THREE.Mesh(new THREE.BoxGeometry(0.01,0.005,h),edge);
-    l.position.set(i,-0.002,0);group.add(l);
+  const grid=new THREE.MeshStandardMaterial({color:0x222250,metalness:0,roughness:1,transparent:true,opacity:0.3});
+  for(let i=-w/2+20;i<w/2;i+=40){
+    const l=new THREE.Mesh(new THREE.BoxGeometry(1,0.5,h*0.6),grid);l.position.set(i,0.25,0);g.add(l);
   }
-  // Border
-  const bx=new THREE.Mesh(new THREE.BoxGeometry(w+0.08,0.04,0.04),edge);bx.position.y=0.02;group.add(bx);
-  const bz=new THREE.Mesh(new THREE.BoxGeometry(0.04,0.04,h+0.08),edge);bz.position.y=0.02;group.add(bz);
-
   // Props
-  for(let p=0;p<2+Math.floor(Math.random()*3);p++){
-    const prop=new THREE.Mesh(new THREE.BoxGeometry(0.06+Math.random()*0.08,0.06+Math.random()*0.06,0.06+Math.random()*0.08),edge);
-    prop.position.set((Math.random()-0.5)*w*0.7,0.04,-(Math.random()-0.5)*h*0.5);
-    group.add(prop);
+  for(let p=0;p<2+Math.floor(Math.random()*4);p++){
+    const pw=4+Math.random()*12,ph=4+Math.random()*12,pd=4+Math.random()*12;
+    const prop=new THREE.Mesh(new THREE.BoxGeometry(pw,ph,pd),border);
+    prop.position.set((Math.random()-0.5)*w*0.7,ph/2,(Math.random()-0.5)*h*0.6);
+    g.add(prop);
   }
-  return group;
+  return g;
 }
 
 function spawnScene(){
-  const w=2.5+Math.random()*3;
-  const h=1+Math.random()*1.2;
-  const sx=(Math.random()-0.5)*(window.innerWidth-w*100-100);
-  const sy=(Math.random()-0.5)*(window.innerHeight-h*100-200);
+  const W2=W/2,H2=H/2;
+  const pw=280+Math.random()*320;
+  const ph=80+Math.random()*60;
+  const px=(Math.random()-0.5)*(W-pw-160);
+  const py=(Math.random()-0.5)*(H-ph-240);
 
-  const platform=makePlatform(w,h);
-  platform.position.set(sx,sy,0);
-  scene.add(platform);
+  const plat=makePlatform(pw,ph);
+  plat.position.set(px,py,0);
+  scene.add(plat);
 
-  const robot=makeRobot(0xaa88ff);
-  robot.position.set(sx-w*50-30,sy,0.1);
-  robot.scale.setScalar(80);
-  scene.add(robot);
+  const robSize=H*0.065;
+  const rob=makeRobot(Math.random()<0.5?0xaa88ff:0x66bbdd);
+  rob.scale.setScalar(robSize/56);
+  const startX=px-pw/2-robSize;
+  rob.position.set(startX,py+ph*0.25+robSize*0.3,0.5);
+  scene.add(rob);
 
-  scenes.push({
-    platform,robot,w,h,sx,sy,
-    age:0,life:7+Math.random()*5,
-    startX:sx-w*50-30,
-    endX:sx+w*50+30
-  });
+  scenes.push({plat,rob,pw,startX,endX:px+pw/2+robSize,py,age:0,life:6+Math.random()*5,size:robSize});
 }
 
 function animate(ts){
   requestAnimationFrame(animate);
+  const dt=Math.min((ts-(animate._t||ts))/1000,0.1);animate._t=ts;
 
-  const dt=Math.min((ts-(animate.last||ts))/1000,0.1);
-  animate.last=ts;
-
-  // Update scenes
   for(let i=scenes.length-1;i>=0;i--){
-    const s=scenes[i];
-    s.age+=dt;
-    const progress=Math.max(0,Math.min(1,(s.age-0.8)/(s.life-1.6)));
-    s.robot.position.x=s.startX+(s.endX-s.startX)*progress;
+    const s=scenes[i];s.age+=dt;
+    const prog=Math.max(0,Math.min(1,(s.age-0.7)/(s.life-1.4)));
+    s.rob.position.x=s.startX+(s.endX-s.startX)*prog;
 
-    // Leg swing
-    const lp=s.robot.userData.legPhase+=dt*8;
-    s.robot.userData.ll.rotation.x=Math.sin(lp)*0.3;
-    s.robot.userData.rl.rotation.x=-Math.sin(lp)*0.3;
-    s.robot.userData.la.rotation.z=0.4+Math.sin(lp)*0.2;
-    s.robot.userData.ra.rotation.z=-0.4-Math.sin(lp)*0.2;
-
-    // Bob
-    s.robot.position.y=sy(s)+Math.abs(Math.sin(lp*2))*2;
-    function sy(s){return s.sy;}
+    // Animate
+    const p=s.rob.userData.phase+=dt*7;
+    s.rob.userData.ll.rotation.x=Math.sin(p)*0.25;
+    s.rob.userData.rl.rotation.x=-Math.sin(p)*0.25;
+    s.rob.userData.la.rotation.z=0.3+Math.sin(p)*0.2;
+    s.rob.userData.ra.rotation.z=-0.3-Math.sin(p)*0.2;
+    s.rob.position.y=s.py+s.size*0.25+Math.abs(Math.sin(p*1.5))*s.size*0.04;
 
     // Fade
-    const fade=s.age<1?s.age:s.age>s.life-1.5?Math.max(0,(s.life-s.age)/1.5):1;
-    s.platform.traverse(c=>{if(c.material&&c.material.opacity!==undefined)c.material.opacity=0.5*fade});
-    s.robot.traverse(c=>{if(c.material&&c.material.opacity!==undefined)c.material.opacity=0.7*fade});
+    const fade=s.age<0.7?s.age/0.7:s.age>s.life-1.2?Math.max(0,(s.life-s.age)/1.2):1;
+    s.plat.traverse(c=>{if(c.material&&c.material.opacity!==undefined)c.material.opacity=0.55*fade});
+    s.rob.traverse(c=>{if(c.material&&c.material.opacity!==undefined&&!c.material.emissive)c.material.opacity=0.75*fade});
 
-    if(s.age>s.life){
-      scene.remove(s.platform);
-      scene.remove(s.robot);
-      scenes.splice(i,1);
-    }
+    if(s.age>s.life){scene.remove(s.plat);scene.remove(s.rob);scenes.splice(i,1)}
   }
 
-  // Spawner
-  if(scenes.length<3&&!animate.nextSpawn)animate.nextSpawn=ts+2000;
-  if(animate.nextSpawn&&ts>animate.nextSpawn&&scenes.length<3){
-    spawnScene();
-    animate.nextSpawn=ts+2500+Math.random()*3000;
-  }
+  if(scenes.length<3&&(!animate._ns||ts>animate._ns)){spawnScene();animate._ns=ts+2500+Math.random()*3500}
 
   renderer.render(scene,camera);
 }
-animate.last=0;
+animate._t=0;
 
-spawnScene();
-spawnScene();
+spawnScene();spawnScene();
 requestAnimationFrame(animate);
 
 window.addEventListener('resize',()=>{
-  renderer.setSize(window.innerWidth,window.innerHeight);
-  camera.left=-window.innerWidth/2;camera.right=window.innerWidth/2;
-  camera.top=window.innerHeight/2;camera.bottom=-window.innerHeight/2;
+  W=window.innerWidth;H=window.innerHeight;
+  renderer.setSize(W,H);
+  camera.left=-W/2;camera.right=W/2;camera.top=H/2;camera.bottom=-H/2;
   camera.updateProjectionMatrix();
 });
 
-// Cursor
 const cursor=document.querySelector('.cursor'),ring=document.querySelector('.cursor-ring');
 let mx=0,my=0,rX=0,rY=0;
 document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
 (function animCur(){rX+=(mx-rX)*0.15;rY+=(my-rY)*0.15;cursor.style.left=rX+'px';cursor.style.top=rY+'px';ring.style.left=mx+'px';ring.style.top=my+'px';requestAnimationFrame(animCur)})();
 document.querySelectorAll('a,button,.cap-item').forEach(el=>{el.addEventListener('mouseenter',()=>ring.classList.add('hover'));el.addEventListener('mouseleave',()=>ring.classList.remove('hover'))});
-const hdr=document.getElementById('header');
-let scr=0;
+const hdr=document.getElementById('header');let scr=0;
 window.addEventListener('scroll',()=>{scr=window.scrollY;hdr.classList.toggle('scrolled',scr>30)},{passive:true});
-document.addEventListener('mousemove',e=>{const x=(e.clientX/window.innerWidth-0.5)*8,y=(e.clientY/window.innerHeight-0.5)*8;document.querySelector('.ambient-1').style.transform=`translate(${x}px,${y}px)`;document.querySelector('.ambient-2').style.transform=`translate(${-x*0.7}px,${-y*0.7}px)`},{passive:true});
+document.addEventListener('mousemove',e=>{const x=(e.clientX/W-0.5)*8,y=(e.clientY/H-0.5)*8;document.querySelector('.ambient-1').style.transform=`translate(${x}px,${y}px)`;document.querySelector('.ambient-2').style.transform=`translate(${-x*0.7}px,${-y*0.7}px)`},{passive:true});
 </script>
 </body>
 </html>
