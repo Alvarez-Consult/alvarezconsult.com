@@ -1,0 +1,52 @@
+<!DOCTYPE html><html><body style="margin:0;background:#111">
+<canvas id="c" style="display:block"></canvas>
+<div id="log" style="position:fixed;top:10px;left:10px;color:#0f0;font:14px monospace;z-index:9">...</div>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const L=document.getElementById('log');
+L.textContent='THREE loaded';
+
+const r=new THREE.WebGLRenderer({canvas:document.getElementById('c')});
+r.setSize(window.innerWidth,window.innerHeight);
+const scene=new THREE.Scene();
+const cam=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,1000);
+cam.position.set(0,2,8);cam.lookAt(0,0,0);
+
+scene.add(new THREE.AmbientLight(0xffffff,2));
+scene.add(new THREE.DirectionalLight(0xffffff,2)).position.set(1,2,3);
+
+// Add a test cube to verify rendering works
+const cube=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),new THREE.MeshStandardMaterial({color:0xff0000}));
+scene.add(cube);
+r.render(scene,cam);
+L.textContent='Cube rendered - should see red square';
+
+// Load model
+new GLTFLoader().load('models/human.glb',
+  function(gltf){
+    const model=gltf.scene;
+    const box=new THREE.Box3().setFromObject(model);
+    const s=box.max.y-box.min.y;
+    model.scale.setScalar(4/s);
+    model.position.set(3,0,0);
+    scene.add(model);
+    cube.material.color.set(0x00ff00);
+    L.textContent='MODEL LOADED - '+gltf.animations.length+' animations';
+    
+    if(gltf.animations.length){
+      const mixer=new THREE.AnimationMixer(model);
+      mixer.clipAction(gltf.animations[0]).play();
+      const clock=new THREE.Clock();
+      function anim(){requestAnimationFrame(anim);mixer.update(clock.getDelta());r.render(scene,cam)}
+      anim();
+    }
+  },
+  function(xhr){if(xhr.total)L.textContent='Loading: '+Math.round(xhr.loaded/xhr.total*100)+'%'},
+  function(err){L.textContent='ERROR: '+err.message;cube.material.color.set(0xff0000)}
+);
+</script>
+</body></html>
