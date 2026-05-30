@@ -11,78 +11,49 @@ const L=document.getElementById('log');
 
 const r=new THREE.WebGLRenderer({canvas:document.getElementById('c'),alpha:true});
 r.setSize(window.innerWidth,window.innerHeight);
+r.outputColorSpace=THREE.SRGBColorSpace;
+
 const scene=new THREE.Scene();
 const cam=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,100);
 cam.position.set(0,0,10);cam.lookAt(0,0,0);
 
-scene.add(new THREE.AmbientLight(0xffffff,3));
-scene.add(new THREE.DirectionalLight(0xffffff,3)).position.set(1,1,1);
+// Use BasicMaterial - ignores lights, always shows color
+const cube=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),new THREE.MeshBasicMaterial({color:0xff00ff}));
+cube.position.set(-3,0,0);scene.add(cube);
 
-// Pink cube - user confirms seeing this
-const cube=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),new THREE.MeshStandardMaterial({color:0xff00ff}));
-cube.position.set(-3,0,0);
-scene.add(cube);
+const sphere=new THREE.Mesh(new THREE.SphereGeometry(1,16,16),new THREE.MeshBasicMaterial({color:0x00ff00}));
+sphere.position.set(3,0,0);scene.add(sphere);
 
-// Green sphere - another reference
-const sphere=new THREE.Mesh(new THREE.SphereGeometry(1,16,16),new THREE.MeshStandardMaterial({color:0x00ff00,emissive:0x003300}));
-sphere.position.set(3,0,0);
-scene.add(sphere);
-
-L.textContent='Loading model...';
+L.textContent='Loading...';
 
 new GLTFLoader().load('models/human.glb',function(gltf){
   const model=gltf.scene;
-  L.textContent='Model loaded. Meshes:';
-
-  // Print all meshes
   model.traverse(function(c){
-    if(c.isMesh){
-      L.textContent+=' '+c.type;
-      // Force material
-      if(c.material){
-        const mats=Array.isArray(c.material)?c.material:[c.material];
-        for(let j=0;j<mats.length;j++){
-          mats[j].color=new THREE.Color(0xff8800);
-          mats[j].emissive=new THREE.Color(0xff4400);
-          mats[j].emissiveIntensity=1;
-          mats[j].wireframe=false;
-          mats[j].transparent=false;
-          mats[j].opacity=1;
-          mats[j].needsUpdate=true;
-        }
+    if(c.isMesh&&c.material){
+      const mats=Array.isArray(c.material)?c.material:[c.material];
+      for(let j=0;j<mats.length;j++){
+        // Convert to BasicMaterial (no lighting needed)
+        const col=mats[j].color||new THREE.Color(0xff8800);
+        const newMat=new THREE.MeshBasicMaterial({color:col});
+        if(mats[j].map)newMat.map=mats[j].map;
+        mats[j]=newMat;
       }
+      c.material=Array.isArray(c.material)?mats:mats[0];
     }
   });
-
   const box=new THREE.Box3().setFromObject(model);
   const h=box.max.y-box.min.y;
   model.scale.setScalar(4/h);
-  // Put model at origin (0,0,0) - between cube and sphere
   model.position.set(0,0,0);
   scene.add(model);
-
-  L.textContent+=' | Scale:'+model.scale.x.toFixed(2)+' H:'+h.toFixed(1);
-
-  // Anim
+  L.textContent='Model at center | BasicMaterial | scale:'+model.scale.x.toFixed(1);
   if(gltf.animations.length){
     const mixer=new THREE.AnimationMixer(model);
     mixer.clipAction(gltf.animations[0]).play();
     const clock=new THREE.Clock();
-    function anim(){
-      requestAnimationFrame(anim);
-      const dt=Math.min(clock.getDelta(),0.1);
-      mixer.update(dt);
-      cube.rotation.y+=dt*0.5;
-      sphere.position.y=Math.sin(Date.now()*0.003)*0.5;
-      r.render(scene,cam);
-    }
+    function anim(){requestAnimationFrame(anim);mixer.update(Math.min(clock.getDelta(),0.1));cube.rotation.y+=0.01;r.render(scene,cam)}
     anim();
-    L.textContent+=' | Animating';
   }
-},function(xhr){
-  if(xhr.total)L.textContent='Loading: '+Math.round(xhr.loaded/xhr.total*100)+'%';
-},function(err){
-  L.textContent='ERROR: '+err.message;
-});
+},function(xhr){if(xhr.total)L.textContent='Loading: '+Math.round(xhr.loaded/xhr.total*100)+'%'},function(err){L.textContent='ERROR: '+err});
 </script>
 </body></html>
