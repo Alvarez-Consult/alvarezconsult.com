@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Línea de Tiempo - Repositorios de Ruben-Alvarez-Dev</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            color: #e0e0e0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 5px solid #00d4ff;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1em;
+            color: #a0a0a0;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            color: #00d4ff;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: #a0a0a0;
+            font-size: 0.9em;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+            align-items: start;
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 30px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            position: relative;
+            height: 500px;
+        }
+        
+        .chart-title {
+            font-size: 1.5em;
+            color: #00d4ff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .timeline-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 30px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+        
+        .timeline-title {
+            font-size: 1.5em;
+            color: #00d4ff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .timeline::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .timeline::-webkit-scrollbar-track {
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        .timeline::-webkit-scrollbar-thumb {
+            background: #00d4ff;
+            border-radius: 10px;
+        }
+        
+        .timeline::-webkit-scrollbar-thumb:hover {
+            background: #00ff88;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 25px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, #00d4ff, #00ff88, #ff0088);
+            border-radius: 10px;
+        }
+        
+        .timeline-item {
+            margin-bottom: 25px;
+            margin-left: 80px;
+            position: relative;
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            left: -62px;
+            top: 5px;
+            width: 16px;
+            height: 16px;
+            background: #00d4ff;
+            border: 3px solid #1e1e2e;
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(0, 212, 255, 0.7);
+            z-index: 10;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 12px rgba(0, 212, 255, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 25px rgba(0, 212, 255, 1);
+            }
+        }
+        
+        .timeline-content {
+            background: rgba(0, 212, 255, 0.08);
+            border-left: 4px solid #00d4ff;
+            padding: 15px 18px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .timeline-content:hover {
+            background: rgba(0, 212, 255, 0.15);
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+            border-left-color: #00ff88;
+        }
+        
+        .timeline-year {
+            font-weight: bold;
+            color: #00ff88;
+            font-size: 1.05em;
+            margin-bottom: 5px;
+        }
+        
+        .timeline-description {
+            font-size: 0.95em;
+            color: #c0c0c0;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .repo-category {
+            display: inline-block;
+            background: rgba(0, 255, 136, 0.15);
+            border: 1px solid #00ff88;
+            color: #00ff88;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            margin-top: 8px;
+            margin-right: 6px;
+            font-weight: 600;
+        }
+        
+        .repo-count {
+            font-size: 0.85em;
+            color: #a0a0a0;
+            margin-top: 6px;
+            font-style: italic;
+        }
+        
+        .full-width-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+        
+        .section-title {
+            font-size: 1.8em;
+            color: #00d4ff;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #00d4ff;
+        }
+        
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .category-card {
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid;
+            transition: all 0.3s ease;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .category-card h3 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        
+        .category-card p {
+            font-size: 0.95em;
+            line-height: 1.5;
+            color: #c0c0c0;
+        }
+        
+        .cat-jart {
+            background: rgba(0, 255, 136, 0.1);
+            border-left-color: #00ff88;
+        }
+        
+        .cat-jart h3 {
+            color: #00ff88;
+        }
+        
+        .cat-mcp {
+            background: rgba(255, 136, 0, 0.1);
+            border-left-color: #ff8800;
+        }
+        
+        .cat-mcp h3 {
+            color: #ff8800;
+        }
+        
+        .cat-backend {
+            background: rgba(0, 136, 255, 0.1);
+            border-left-color: #0088ff;
+        }
+        
+        .cat-backend h3 {
+            color: #0088ff;
+        }
+        
+        .cat-frontend {
+            background: rgba(136, 0, 255, 0.1);
+            border-left-color: #8800ff;
+        }
+        
+        .cat-frontend h3 {
+            color: #8800ff;
+        }
+        
+        .cat-edu {
+            background: rgba(255, 0, 136, 0.1);
+            border-left-color: #ff0088;
+        }
+        
+        .cat-edu h3 {
+            color: #ff0088;
+        }
+        
+        .cat-tools {
+            background: rgba(0, 255, 200, 0.1);
+            border-left-color: #00ffc8;
+        }
+        
+        .cat-tools h3 {
+            color: #00ffc8;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            border-top: 1px solid rgba(0, 212, 255, 0.3);
+            color: #a0a0a0;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Línea de Tiempo - Mis Repositorios</h1>
+            <p class="subtitle">Evolución completa de mis proyectos en GitHub (2021-2026)</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">130+</div>
+                <div class="stat-label">Repositorios Totales</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">5 Años</div>
+                <div class="stat-label">Período Activo</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">6 Áreas</div>
+                <div class="stat-label">Categorías Principales</div>
+            </div>
+        </div>
+        
+        <div class="main-grid">
+            <!-- GRÁFICO -->
+            <div class="chart-container">
+                <div class="chart-title">📈 Distribución de Repositorios</div>
+                <canvas id="categoryChart"></canvas>
+            </div>
+            
+            <!-- LÍNEA DE TIEMPO -->
+            <div class="timeline-container">
+                <div class="timeline-title">🚀 Evolución Temporal</div>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-year">2021 - Inicios</div>
+                            <div class="timeline-description">Comienzo del viaje de desarrollo en bootcamps</div>
+                            <div class="repo-category">Educación</div>
+                            <div class="repo-category">Fundamentos</div>
+                            <div class="repo-count">~10 repositorios</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-year">2022 - Frontend</div>
+                            <div class="timeline-description">Enfoque en desarrollo frontend con React y Vanilla JS</div>
+                            <div class="repo-category">React</div>
+                            <div class="repo-category">Frontend</div>
+                            <div class="repo-category">Portfolios</div>
+                            <div class="repo-count">~20 repositorios</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-year">2023 - Backend & APIs</div>
+                            <div class="timeline-description">APIs REST con Node.js, Express y bases de datos</div>
+                            <div class="repo-category">Backend</div>
+                            <div class="repo-category">Node.js</div>
+                            <div class="repo-category">Base de Datos</div>
+                            <div class="repo-count">~15 repositorios</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-year">2024 - AI & LLMs</div>
+                            <div class="timeline-description">Transición hacia agentes de IA y Model Context Protocol</div>
+                            <div class="repo-category">AI</div>
+                            <div class="repo-category">LLM</div>
+                            <div class="repo-category">Agentes</div>
+                            <div class="repo-count">~25 repositorios</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-year">2025-2026 - Jart-OS</div>
+                            <div class="timeline-description">Ecosistema completo: agentes, infraestructura, herramientas</div>
+                            <div class="repo-category">Jart-OS</div>
+                            <div class="repo-category">Infraestructura</div>
+                            <div class="repo-category">DevOps</div>
+                            <div class="repo-count">~50+ repositorios</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- CATEGORÍAS DETALLADAS -->
+        <div class="full-width-section">
+            <h2 class="section-title">📚 Principales Categorías de Proyectos</h2>
+            <div class="category-grid">
+                <div class="category-card cat-jart">
+                    <h3>🤖 Jart-OS (35+ repos)</h3>
+                    <p>Sistema operativo de agentes con múltiples módulos: core, OCR, voz, biometría, secretos, inferencia, hotline e infraestructura completa.</p>
+                </div>
+                
+                <div class="category-card cat-mcp">
+                    <h3>🔌 MCP (10+ repos)</h3>
+                    <p>Model Context Protocol: memoria, gateway, maestro, perplexica, tailscale, realtime tech docs y documentación.</p>
+                </div>
+                
+                <div class="category-card cat-backend">
+                    <h3>💼 Backend & APIs (15+ repos)</h3>
+                    <p>APIs REST, Node.js, Express, bases de datos SQL/NoSQL, Docker, deploy en VPS y sistemas de autenticación JWT.</p>
+                </div>
+                
+                <div class="category-card cat-frontend">
+                    <h3>🎨 Frontend & Portfolios (20+ repos)</h3>
+                    <p>React, Vanilla JS, Astro, Bootstrap, diseño responsive, componentes reutilizables y múltiples versiones de portfolios.</p>
+                </div>
+                
+                <div class="category-card cat-edu">
+                    <h3>📚 Educación & Bootcamps (10+ repos)</h3>
+                    <p>Proyectos de aprendizaje: Neoland, HENRY, ILERNA, Platzi, Breaking Bad API, Rick & Morty y proyectos iniciales.</p>
+                </div>
+                
+                <div class="category-card cat-tools">
+                    <h3>🛠️ Herramientas & Utilidades (15+ repos)</h3>
+                    <p>CLI instaladores, doctores, helpers, RAG, búsqueda web, pipelines, gobiernanza y asistentes especializados.</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>📊 Línea de Tiempo Interactiva | Generada en Julio 2026 | 130+ Repositorios Documentados</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Gráfico de distribución con Chart.js
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        const categoryChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Jart-OS', 'MCP', 'Backend & APIs', 'Frontend', 'Educación', 'Herramientas', 'Otros'],
+                datasets: [{
+                    data: [35, 10, 15, 20, 10, 15, 15],
+                    backgroundColor: [
+                        '#00ff88',
+                        '#ff8800',
+                        '#0088ff',
+                        '#8800ff',
+                        '#ff0088',
+                        '#00ffc8',
+                        '#00d4ff'
+                    ],
+                    borderColor: '#1e1e2e',
+                    borderWidth: 3,
+                    hoverOffset: 15,
+                    hoverBorderWidth: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#e0e0e0',
+                            font: {
+                                size: 12,
+                                weight: 'bold'
+                            },
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(30, 30, 46, 0.9)',
+                        titleColor: '#00d4ff',
+                        bodyColor: '#e0e0e0',
+                        borderColor: '#00d4ff',
+                        borderWidth: 2,
+                        padding: 15,
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed + ' repositorios';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
